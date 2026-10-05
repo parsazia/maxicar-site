@@ -5,7 +5,7 @@ export const metadata = {
   title: { default: "ماکسیکار | قطعات نیسان ماکسیما، مورانو و تیانا", template: "%s | ماکسیکار" },
   description: "مرجع تخصصی قطعات نیسان ماکسیما، مورانو و تیانا؛ جست‌وجوی قطعه، بررسی مشخصات و استعلام موجودی.",
   applicationName: "ماکسیکار",
-  robots: { index: false, follow: false },
+  robots: process.env.VERCEL_ENV === "production" ? { index: true, follow: true } : { index: false, follow: false },
 };
 
 export default function RootLayout({ children }) {
