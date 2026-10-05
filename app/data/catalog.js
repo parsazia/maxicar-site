@@ -36,8 +36,10 @@ export function normalize(value = "") {
 }
 
 export function searchCatalog(query = "") {
-  const q = normalize(query.trim());
-  if (!q) return [];
-  return products.filter((p) => normalize([p.name, p.carName, p.partNumber, p.condition, ...p.aliases].join(" ")).includes(q)
-    || normalize(q).split("").length > 0 && p.aliases.some((alias) => normalize(alias).includes(q)));
+  const tokens = query.trim().split(/\\s+/).map(normalize).filter(Boolean);
+  if (!tokens.length) return [];
+  return products.filter((p) => {
+    const haystack = normalize([p.name, p.carName, p.partNumber, p.condition, ...p.aliases].join(" "));
+    return tokens.every((token) => haystack.includes(token));
+  });
 }
