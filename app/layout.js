@@ -1,8 +1,11 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "ماکسیکار | قطعات نیسان ماکسیما، مورانو و تیانا",
-  description: "مرجع تخصصی قطعات نیسان ماکسیما، مورانو و تیانا؛ جست‌وجوی سریع قطعه، کد فنی و وضعیت موجودی.",
+  metadataBase: new URL("https://maxicar-site.vercel.app"),
+  title: { default: "ماکسیکار | قطعات نیسان ماکسیما، مورانو و تیانا", template: "%s | ماکسیکار" },
+  description: "مرجع تخصصی قطعات نیسان ماکسیما، مورانو و تیانا؛ جست‌وجوی قطعه، بررسی مشخصات و استعلام موجودی.",
+  applicationName: "ماکسیکار",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }) {
