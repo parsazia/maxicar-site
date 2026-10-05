@@ -8,6 +8,7 @@ import { cars, systems, products, searchCatalog } from "./data/catalog";
 export default function Home() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("همه");
+  const [selectedSystem, setSelectedSystem] = useState(null);
   const results = useMemo(() => searchCatalog(query).filter((p) => condition === "همه" || p.condition === condition), [query, condition]);
   const showResults = query.trim().length > 0;
 
@@ -54,8 +55,9 @@ export default function Home() {
 
     <section className="systemsSection" id="systems"><div className="container section">
       <div className="sectionTitle"><div><span className="eyebrow">مسیر دوم</span><h2>از روی سیستم خودرو پیدا کن</h2><p>اگر نام دقیق قطعه را نمی‌دانی، از گروه فنی شروع کن.</p></div><span className="sectionCount">۱۷ گروه <span>●</span></span></div>
-      <div className="systemGrid">{systems.map((system, i) => <Link href={"/cars/maxima/" + system.slug} className="systemTile" key={system.slug}><span className="systemIndex">{String(i + 1).padStart(2, "0")}</span><span className="systemName">{system.name}</span><ChevronLeft size={17}/></Link>)}</div>
-      <p className="systemFootnote"><SlidersHorizontal size={16}/> پس از انتخاب خودرو، دسته‌بندی را بر اساس همان مدل بررسی کن.</p>
+      <div className="systemGrid">{systems.map((system, i) => <button type="button" className="systemTile systemTileButton" key={system.slug} onClick={() => setSelectedSystem(selectedSystem === system.slug ? null : system.slug)} aria-expanded={selectedSystem === system.slug}><span className="systemIndex">{String(i + 1).padStart(2, "0")}</span><span className="systemName">{system.name}</span><ChevronLeft size={17}/></button>)}</div>
+      {selectedSystem && <div className="systemChooser"><div><b>خودرو را برای «{systems.find((item) => item.slug === selectedSystem)?.name}» انتخاب کن</b><button type="button" onClick={() => setSelectedSystem(null)} aria-label="بستن انتخاب خودرو">بستن ×</button></div><div className="systemChooserCars">{cars.map((car) => <Link key={car.slug} href={"/cars/" + car.slug + "/" + selectedSystem}>{car.name}<ArrowLeft size={15}/></Link>)}</div></div>}
+      <p className="systemFootnote"><SlidersHorizontal size={16}/> ابتدا گروه فنی را انتخاب کن؛ سپس خودرو را مشخص کن تا مسیر درست باز شود.</p>
     </div></section>
 
     <section className="section container" id="sample-parts">
