@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Search, CarFront, Wrench, ShieldCheck, PackageCheck, Headphones, ChevronLeft, SlidersHorizontal, CircleHelp } from "lucide-react";
-import { cars, systems, products, searchCatalog } from "./data/catalog";
+import { cars, systems, products, searchCatalog, normalize } from "./data/catalog";
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("همه");
   const [selectedSystem, setSelectedSystem] = useState(null);
   const results = useMemo(() => searchCatalog(query).filter((p) => condition === "همه" || p.condition === condition), [query, condition]);
+  const carResults = useMemo(() => { const q = normalize(query); if (!q) return []; return cars.filter((car) => [car.name, car.en, car.slug].some((value) => normalize(value).includes(q) || q.includes(normalize(value)))); }, [query]);
   const showResults = query.trim().length > 0;
 
   return <main>
@@ -34,9 +35,9 @@ export default function Home() {
           </div>
           <div className="searchHints"><span>جست‌وجوهای نمونه:</span><button onClick={() => setQuery("فن بخاری ماکسیما")}>فن بخاری ماکسیما</button><button onClick={() => setQuery("هدلایت")}>هدلایت</button><button onClick={() => setQuery("شلنگ هیدرولیک")}>شلنگ هیدرولیک</button></div>
           {showResults && <div className="searchResults" id="searchResults">
-            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length} نتیجه نمونه</span></div>
+            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length + carResults.length} نتیجه نمونه</span></div>
             <div className="conditionTabs" aria-label="فیلتر وضعیت قطعه">{["همه","کارکرده","نو"].map((x) => <button key={x} className={condition === x ? "active" : ""} onClick={() => setCondition(x)}>{x}</button>)}</div>
-            {results.length ? results.map((p) => <Link className="searchResult" href={"/parts/" + p.slug} key={p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.condition} · {p.status}</small></span><ChevronLeft size={18}/></Link>) : <div className="noResults"><CircleHelp size={19}/><span>در نمونه فعلی نتیجه‌ای پیدا نشد. نام رایج‌تر قطعه یا نام خودرو را امتحان کن.</span></div>}
+            {carResults.map((car) => <Link className="searchResult" href={"/cars/" + car.slug} key={"car-" + car.slug}><span className="miniPart"><CarFront size={17}/></span><span className="resultText"><b>{car.name}</b><small>{car.en} · مشاهده گروه‌های قطعات</small></span><ChevronLeft size={18}/></Link>)}{results.map((p) => <Link className="searchResult" href={"/parts/" + p.slug} key={p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.condition} · {p.status}</small></span><ChevronLeft size={18}/></Link>)}{!results.length && !carResults.length && <div className="noResults"><CircleHelp size={19}/><span>در نمونه فعلی نتیجه‌ای پیدا نشد. نام رایج‌تر قطعه یا نام خودرو را امتحان کن.</span></div>}
             <p className="demoNotice">این نتایج برای آزمایش طراحی هستند و هنوز به موجودی واقعی متصل نشده‌اند.</p>
           </div>}
           <div className="heroProof"><span><ShieldCheck size={16}/> تطبیق مشخصات پیش از سفارش</span><span><PackageCheck size={16}/> وضعیت قطعه شفاف</span></div>
