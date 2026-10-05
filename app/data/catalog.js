@@ -36,7 +36,7 @@ export function normalize(value = "") {
 }
 
 export function searchCatalog(query = "") {
-  const tokens = query.trim().split(/\\s+/).map(normalize).filter(Boolean);
+  const tokens = query.trim().split(/\s+/).map(normalize).filter(Boolean);
   if (!tokens.length) return [];
   return products.filter((p) => {
     const haystack = normalize([p.name, p.carName, p.partNumber, p.condition, ...p.aliases].join(" "));
