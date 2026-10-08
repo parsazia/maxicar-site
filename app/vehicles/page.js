@@ -1,4 +1,5 @@
 import Link from "next/link";
+import VehicleSubmissionForm from "./VehicleSubmissionForm";
 import { ArrowLeft, CarFront, ClipboardCheck, ShieldCheck, FileText, Headphones, Search, BadgeCheck } from "lucide-react";
 
 export const metadata = {
@@ -35,15 +36,8 @@ export default function VehicleMarketPage() {
 
     <section className="container vehicleMarketSection" id="submit-car"><div className="vehicleSubmitBox">
       <div><span className="eyebrow">برای فروشنده</span><h2>خودروت را برای فروش معرفی کن</h2><p>اطلاعات زیر، فیلدهای پیشنهادی فرم ثبت خودرو هستند. دریافت واقعی آگهی پس از اتصال فرم به سامانه فعال می‌شود.</p><ul><li>مدل، سال ساخت و تیپ</li><li>کارکرد، رنگ و وضعیت بدنه</li><li>وضعیت فنی و سابقه تعمیرات مهم</li><li>قیمت پیشنهادی فروشنده</li><li>عکس‌های واضح از زوایای مختلف</li></ul><div className="vehicleCommissionNote"><FileText size={17}/><span>کمیسیون و شرایط همکاری باید پیش از معرفی خریدار، شفاف و مکتوب تأیید شوند.</span></div></div>
-      <div className="vehicleFormPreview">
-        <label>مدل خودرو<select defaultValue=""><option value="" disabled>انتخاب کن</option>{initialCars.map((car)=><option key={car}>{car}</option>)}</select></label>
-        <div className="requestFieldRow"><label>سال ساخت<input placeholder="مثلاً ۱۳۹۵"/></label><label>کارکرد<input placeholder="کیلومتر"/></label></div>
-        <label>قیمت پیشنهادی (تومان)<input placeholder="قیمت مدنظر فروشنده"/></label>
-        <label>توضیحات و وضعیت خودرو<textarea rows={3} placeholder="وضعیت بدنه، فنی، تعمیرات و نکات مهم"/></label>
-        <label>راه ارتباطی<input placeholder="شماره تماس"/></label>
-        <div className="requestDisclaimer"><Headphones size={15}/> فرم نمایشی است؛ پس از اتصال سامانه، اطلاعات به تیم ماکسیکار ارسال می‌شود.</div>
-      </div>
-    </div></section>
+      <VehicleSubmissionForm/>
+   </div></section>
 
     <footer className="innerFooter"><div className="container footerBottom"><span>ماکسیکار · خریدوفروش تخصصی خودرو</span><span>در شروع: ماکسیما · مورانو · تیانا</span></div></footer>
   </main>;
