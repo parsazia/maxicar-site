@@ -17,7 +17,7 @@ export default function Home() {
     <div className="announcement"><div className="container announcementInner"><span>تخصص ما: قطعات نیسان ماکسیما، مورانو و تیانا</span><span className="announcementSide">قبل از سفارش، تطبیق قطعه را بررسی می‌کنیم</span></div></div>
     <header className="siteHeader container">
       <Link href="/" className="brand" aria-label="صفحه اصلی ماکسیکار"><span className="brandSymbol"><span>M</span></span><span className="brandWords"><b>ماکسیکار</b><small>مرجع تخصصی قطعات نیسان</small></span></Link>
-      <nav className="desktopNav" aria-label="منوی اصلی"><a href="#cars">انتخاب خودرو</a><a href="#systems">دسته‌بندی قطعات</a><a href="#how">راهنمای خرید</a><a href="#how">راهنمای خرید</a><a href="#sourcing">تأمین و واردات</a><a href="#contact">تماس و استعلام</a></nav>
+      <nav className="desktopNav" aria-label="منوی اصلی"><a href="#cars">انتخاب خودرو</a><a href="#systems">دسته‌بندی قطعات</a><a href="#how">راهنمای خرید</a><a href="#sourcing">تأمین و واردات</a><a href="#contact">تماس و استعلام</a></nav>
       <a className="headerAction" href="#search"><Search size={17}/><span>پیدا کردن قطعه</span></a>
     </header>
 
