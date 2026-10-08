@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ImportRequestForm from "./ImportRequestForm";
 import { ArrowLeft, PackageSearch, ClipboardList, Headphones, MapPin, ShieldCheck, Building2, Truck, SearchCheck } from "lucide-react";
 
 const services = [
@@ -40,16 +41,7 @@ export default function ImportTradePage() {
       <div className="tradeSteps"><div><span>۱</span><div><b>مشخصات کالا را بفرست</b><small>نام، عکس، لینک، تعداد و مقصد تحویل.</small></div></div><div><span>۲</span><div><b>امکان و هزینه بررسی می‌شود</b><small>قیمت کالا، حمل و شرایط مرتبط مشخص می‌شود.</small></div></div><div><span>۳</span><div><b>پس از توافق اقدام می‌کنیم</b><small>پس از تأیید شرایط، خرید و ارسال هماهنگ می‌شود.</small></div></div></div>
     </div></section>
 
-    <section className="container tradeSection" id="request"><div className="requestBox">
-      <div><span className="eyebrow">ثبت درخواست تأمین</span><h2>چه کالایی می‌خواهی؟</h2><p>فرم نهایی پس از اتصال به سامانه دریافت درخواست فعال می‌شود. در نسخه طراحی، این بخش ساختار اطلاعات موردنیاز را نشان می‌دهد.</p><div className="requestChannel"><Headphones size={18}/><span><b>مسیر دوم: واتساپ</b><small>دکمه مستقیم واتساپ پس از ثبت شماره رسمی کسب‌وکار فعال می‌شود.</small></span></div></div>
-      <div className="requestFields">
-        <label>نام کالا یا محصول<input placeholder="مثلاً دستگاه، قطعه یا کالای مصرفی" /></label>
-        <label>لینک یا مشخصات کالا<input placeholder="لینک فروشنده، برند یا مدل (اختیاری)" /></label>
-        <div className="requestFieldRow"><label>تعداد<input placeholder="مثلاً ۲۰ عدد" /></label><label>مقصد تحویل<select defaultValue="ایران"><option>ایران</option><option>کشور دیگر</option></select></label></div>
-        <label>توضیحات تکمیلی<textarea placeholder="بودجه تقریبی، زمان موردنیاز یا مشخصات مهم" rows={3}/></label>
-        <div className="requestDisclaimer"><ShieldCheck size={15}/> ثبت درخواست به معنی تضمین تأمین نیست؛ ابتدا امکان انجام سفارش بررسی می‌شود.</div>
-      </div>
-    </div></section>
+    <section className="container tradeSection" id="request"><ImportRequestForm/></section>
 
     <footer className="innerFooter"><div className="container footerBottom"><span>ماکسیکار · قطعات نیسان و خدمات تأمین کالا</span><span><ShieldCheck size={13}/> امکان تأمین پیش از سفارش بررسی می‌شود</span></div></footer>
   </main>;
