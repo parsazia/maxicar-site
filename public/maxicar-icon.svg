@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="نشان ماکسیکار">
+  <rect width="512" height="512" rx="112" fill="#123d70"/>
+  <circle cx="256" cy="256" r="166" fill="none" stroke="#d9e0e7" stroke-width="22" stroke-dasharray="472 572" stroke-linecap="round" transform="rotate(90 256 256)"/>
+  <path d="M151 329V183l105 102 105-102v146" fill="none" stroke="#f7f9fb" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M180 364h152" stroke="#aab8c8" stroke-width="12" stroke-linecap="round"/>
+</svg>
