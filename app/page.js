@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Search, CarFront, Wrench, ShieldCheck, PackageCheck, Headphones, ChevronLeft, SlidersHorizontal, CircleHelp } from "lucide-react";
 import { cars, systems, products, searchCatalog, normalize } from "./data/catalog";
@@ -9,7 +9,45 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("همه");
   const [selectedSystem, setSelectedSystem] = useState(null);
-  const results = useMemo(() => searchCatalog(query).filter((p) => condition === "همه" || p.condition === condition), [query, condition]);
+  const [apiProducts, setApiProducts] = useState([]);
+  const [apiState, setApiState] = useState("loading");
+  const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        setApiState("loading");
+        const params = new URLSearchParams({ page: "1", page_size: "50" });
+        if (query.trim()) params.set("search", query.trim());
+        const response = await fetch("/api/catalog/products?" + params.toString(), { signal: controller.signal, cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload?.message || "دریافت محصولات ناموفق بود.");
+        setApiProducts(Array.isArray(payload.products) ? payload.products : []);
+        setApiError("");
+        setApiState("ready");
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        setApiProducts([]);
+        setApiError(error.message || "اتصال به فروشگاه برقرار نشد.");
+        setApiState("error");
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  const results = useMemo(() => {
+    if (apiState !== "ready") return searchCatalog(query).filter((p) => condition === "همه" || p.condition === condition);
+    const normalizedQuery = normalize(query);
+    return apiProducts.filter((p) => {
+      const conditionMatches = condition === "همه" || !p.condition || p.condition === condition;
+      const textMatches = !normalizedQuery || normalize([p.name, p.carName, p.category, p.partNumber].join(" ")).includes(normalizedQuery);
+      return conditionMatches && textMatches;
+    });
+  }, [apiProducts, apiState, query, condition]);
   const carResults = useMemo(() => { const q = normalize(query); if (!q) return []; return cars.filter((car) => [car.name, car.en, car.slug].some((value) => normalize(value).includes(q) || q.includes(normalize(value)))); }, [query]);
   const showResults = query.trim().length > 0;
 
@@ -35,10 +73,10 @@ export default function Home() {
           </div>
           <div className="searchHints"><span>جست‌وجوهای نمونه:</span><button onClick={() => setQuery("فن بخاری ماکسیما")}>فن بخاری ماکسیما</button><button onClick={() => setQuery("هدلایت")}>هدلایت</button><button onClick={() => setQuery("شلنگ هیدرولیک")}>شلنگ هیدرولیک</button></div>
           {showResults && <div className="searchResults" id="searchResults">
-            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length + carResults.length} نتیجه نمونه</span></div>
+            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length + carResults.length} نتیجه{apiState === "ready" ? " از فروشگاه" : " نمایشی"}</span></div>
             <div className="conditionTabs" aria-label="فیلتر وضعیت قطعه">{["همه","کارکرده","نو"].map((x) => <button key={x} className={condition === x ? "active" : ""} onClick={() => setCondition(x)}>{x}</button>)}</div>
-            {carResults.map((car) => <Link className="searchResult" href={"/cars/" + car.slug} key={"car-" + car.slug}><span className="miniPart"><CarFront size={17}/></span><span className="resultText"><b>{car.name}</b><small>{car.en} · مشاهده گروه‌های قطعات</small></span><ChevronLeft size={18}/></Link>)}{results.map((p) => <Link className="searchResult" href={"/parts/" + p.slug} key={p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.condition} · {p.status}</small></span><ChevronLeft size={18}/></Link>)}{!results.length && !carResults.length && <div className="noResults"><CircleHelp size={19}/><span>در نمونه فعلی نتیجه‌ای پیدا نشد. نام رایج‌تر قطعه یا نام خودرو را امتحان کن.</span></div>}
-            <p className="demoNotice">این نتایج برای آزمایش طراحی هستند و هنوز به موجودی واقعی متصل نشده‌اند.</p>
+            {carResults.map((car) => <Link className="searchResult" href={"/cars/" + car.slug} key={"car-" + car.slug}><span className="miniPart"><CarFront size={17}/></span><span className="resultText"><b>{car.name}</b><small>{car.en} · مشاهده گروه‌های قطعات</small></span><ChevronLeft size={18}/></Link>)}{results.map((p) => <Link className="searchResult" href={p.source === "mixin-api-v4" ? "#contact" : "/parts/" + p.slug} key={(p.source || "demo") + "-" + p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.condition || "وضعیت اعلام نشده"} · {p.status}{p.price !== undefined && p.price !== null ? " · " + Number(p.price).toLocaleString("fa-IR") + " تومان" : ""}</small></span><ChevronLeft size={18}/></Link>)}{!results.length && !carResults.length && <div className="noResults"><CircleHelp size={19}/><span>در نمونه فعلی نتیجه‌ای پیدا نشد. نام رایج‌تر قطعه یا نام خودرو را امتحان کن.</span></div>}
+            {apiState === "ready" ? <p className="demoNotice">جست‌وجوی محصولات از API واقعی فروشگاه انجام می‌شود. برای محصول انتخاب‌شده، قیمت و موجودی نهایی را پیش از سفارش استعلام کن.</p> : apiState === "error" ? <p className="demoNotice">اتصال زنده در دسترس نیست: {apiError} در حال حاضر فقط نمونه‌های نمایشی قابل مشاهده‌اند.</p> : <p className="demoNotice">در حال دریافت نتایج از فروشگاه واقعی…</p>}
           </div>}
           <div className="heroProof"><span><ShieldCheck size={16}/> تطبیق مشخصات پیش از سفارش</span><span><PackageCheck size={16}/> وضعیت قطعه شفاف</span></div>
         </div>
