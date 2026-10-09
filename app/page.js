@@ -1,15 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Search, CarFront, Wrench, ShieldCheck, PackageCheck, Headphones, ChevronLeft, SlidersHorizontal, CircleHelp } from "lucide-react";
-import { cars, systems, products, searchCatalog, normalize } from "./data/catalog";
+import { cars, systems, products, normalize } from "./data/catalog";
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("همه");
   const [selectedSystem, setSelectedSystem] = useState(null);
-  const results = useMemo(() => searchCatalog(query).filter((p) => condition === "همه" || p.condition === condition), [query, condition]);
+  const [catalogProducts, setCatalogProducts] = useState(products);
+  const [catalogMode, setCatalogMode] = useState("demo");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/catalog", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Catalog unavailable");
+        return response.json();
+      })
+      .then((payload) => {
+        if (!active || !Array.isArray(payload.items)) return;
+        setCatalogProducts(payload.items);
+        setCatalogMode(payload.mode === "live" ? "live" : "demo");
+      })
+      .catch(() => {
+        if (active) setCatalogMode("demo");
+      });
+    return () => { active = false; };
+  }, []);
+
+  const results = useMemo(() => {
+    const tokens = query.trim().split(/\\s+/).map(normalize).filter(Boolean);
+    if (!tokens.length) return [];
+    return catalogProducts
+      .filter((p) => condition === "همه" || p.condition === condition)
+      .filter((p) => {
+        const haystack = normalize([p.name, p.carName, p.partNumber, p.condition, ...(p.aliases || [])].join(" "));
+        return tokens.every((token) => haystack.includes(token));
+      });
+  }, [query, condition, catalogProducts]);
   const carResults = useMemo(() => { const q = normalize(query); if (!q) return []; return cars.filter((car) => [car.name, car.en, car.slug].some((value) => normalize(value).includes(q) || q.includes(normalize(value)))); }, [query]);
   const showResults = query.trim().length > 0;
 
@@ -35,10 +65,10 @@ export default function Home() {
           </div>
           <div className="searchHints"><span>جست‌وجوهای نمونه:</span><button onClick={() => setQuery("فن بخاری ماکسیما")}>فن بخاری ماکسیما</button><button onClick={() => setQuery("هدلایت")}>هدلایت</button><button onClick={() => setQuery("شلنگ هیدرولیک")}>شلنگ هیدرولیک</button></div>
           {showResults && <div className="searchResults" id="searchResults">
-            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length + carResults.length} نتیجه نمونه</span></div>
+            <div className="resultHead"><b>نتایج جست‌وجو</b><span>{results.length + carResults.length} نتیجه {catalogMode === "live" ? "از فهرست متصل" : "آزمایشی"}</span></div>
             <div className="conditionTabs" aria-label="فیلتر وضعیت قطعه">{["همه","کارکرده","نو"].map((x) => <button key={x} className={condition === x ? "active" : ""} onClick={() => setCondition(x)}>{x}</button>)}</div>
             {carResults.map((car) => <Link className="searchResult" href={"/cars/" + car.slug} key={"car-" + car.slug}><span className="miniPart"><CarFront size={17}/></span><span className="resultText"><b>{car.name}</b><small>{car.en} · مشاهده گروه‌های قطعات</small></span><ChevronLeft size={18}/></Link>)}{results.map((p) => <Link className="searchResult" href={"/parts/" + p.slug} key={p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.condition} · {p.status}</small></span><ChevronLeft size={18}/></Link>)}{!results.length && !carResults.length && <div className="noResults"><CircleHelp size={19}/><span>در نمونه فعلی نتیجه‌ای پیدا نشد. نام رایج‌تر قطعه یا نام خودرو را امتحان کن.</span></div>}
-            <p className="demoNotice">این نتایج برای آزمایش طراحی هستند و هنوز به موجودی واقعی متصل نشده‌اند.</p>
+            {catalogMode === "live" ? <p className="demoNotice">فهرست از سرویس محصولات متصل دریافت شده است؛ پیش از نهایی‌کردن سفارش، قیمت و موجودی را تأیید کن.</p> : <p className="demoNotice">این نتایج نمایشی‌اند؛ اتصال به فهرست واقعی محصولات هنوز تنظیم نشده است.</p>}
           </div>}
           <div className="heroProof"><span><ShieldCheck size={16}/> تطبیق مشخصات پیش از سفارش</span><span><PackageCheck size={16}/> وضعیت قطعه شفاف</span></div>
         </div>
@@ -62,8 +92,8 @@ export default function Home() {
     </div></section>
 
     <section className="section container" id="sample-parts">
-      <div className="sectionTitle"><div><span className="eyebrow">نمونه مسیر قطعه</span><h2>قطعاتی که می‌توانی جست‌وجو کنی</h2><p>نمونه‌های زیر برای آزمایش مسیر جست‌وجو و نمایش مشخصات‌اند؛ قیمت و موجودی واقعی هنوز وارد نشده است.</p></div></div>
-      <div className="partGrid">{products.map((p, i) => <Link className="partCard" href={"/parts/" + p.slug} key={p.slug}><div className="partVisual"><span className="partNumber">PART / 0{i + 1}</span><div className="partIcon"><Wrench size={37} strokeWidth={1.2}/></div><span className="conditionBadge">{p.condition}</span></div><div className="partCardBody"><span className="partMeta">{p.carName} <span>•</span> {p.status}</span><b>{p.name}</b><span className="partDetails">مشاهده مشخصات نمونه <ArrowLeft size={15}/></span></div></Link>)}</div>
+      <div className="sectionTitle"><div><span className="eyebrow">نمونه مسیر قطعه</span><h2>قطعاتی که می‌توانی جست‌وجو کنی</h2><p>{catalogMode === "live" ? "محصولات دریافت‌شده از سرویس متصل؛ قیمت فقط در صورت ارائه از سوی سرویس نمایش داده می‌شود." : "نمونه‌های فعلی برای آزمایش مسیر جست‌وجو هستند و هنوز اطلاعات واقعی محصولات متصل نشده است."}</p></div></div>
+      <div className="partGrid">{catalogProducts.map((p, i) => <Link className="partCard" href={"/parts/" + p.slug} key={p.slug}><div className="partVisual"><span className="partNumber">PART / 0{i + 1}</span><div className="partIcon"><Wrench size={37} strokeWidth={1.2}/></div><span className="conditionBadge">{p.condition}</span></div><div className="partCardBody"><span className="partMeta">{p.carName || "نیسان"} <span>•</span> {p.status || "استعلام مشخصات"}</span><b>{p.name}</b>{typeof p.price === "number" && p.price > 0 ? <span className="partMeta">{new Intl.NumberFormat("fa-IR").format(p.price)} تومان</span> : null}<span className="partDetails">{catalogMode === "live" ? "مشاهده مشخصات قطعه" : "مشاهده مشخصات نمونه"} <ArrowLeft size={15}/></span></div></Link>)}</div>
     </section>
 
     <section className="tradeTeaser" id="sourcing"><div className="container tradeTeaserInner"><div><span className="eyebrow">یک خدمت دیگر ماکسیکار</span><h2>تأمین و واردات از دبی</h2><p>اگر قطعه یا کالایی را در دبی پیدا کرده‌ای یا برای کسب‌وکارت به دنبال تأمین هستی، درخواستت را برای ما بفرست تا امکان تأمین و ارسال بررسی شود.</p></div><Link href="/import-trade" className="tradeTeaserLink">مشاهده خدمات تأمین <ArrowLeft size={16}/></Link></div></section>
