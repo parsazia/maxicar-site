@@ -16,6 +16,13 @@ function normalizeProduct(item, index) {
 
   const name = cleanText(item.name ?? item.title ?? item.name_fa, 180);
   if (!name) return null;
+  const rawPrice = item.price ?? item.price_toman ?? item.final_price ?? null;
+  const parsedPrice = typeof rawPrice === "string"
+    ? Number(rawPrice.replace(/[\\s,٬،]/g, ""))
+    : Number(rawPrice);
+  const price = rawPrice !== null && rawPrice !== "" && Number.isFinite(parsedPrice) && parsedPrice > 0
+    ? parsedPrice
+    : null;
 
   return {
     id: cleanText(item.id ?? item.product_id ?? item.slug ?? index, 100),
@@ -27,7 +34,7 @@ function normalizeProduct(item, index) {
     condition: cleanText(item.condition ?? item.status_condition ?? item.product_condition, 40),
     status: cleanText(item.status ?? item.inventory_status ?? item.stock_status, 60),
     partNumber: cleanText(item.partNumber ?? item.part_number ?? item.sku ?? item.oem, 100),
-    price: item.price ?? item.price_toman ?? item.final_price ?? null,
+    price,
     image: cleanText(item.image ?? item.image_url ?? item.thumbnail, 1000),
     note: cleanText(item.note ?? item.description ?? item.short_description, 500),
     aliases: Array.isArray(item.aliases)
