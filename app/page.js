@@ -14,7 +14,7 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/catalog", { cache: "no-store" })
+    fetch("/api/v1/products", { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("Catalog unavailable");
         return response.json();
