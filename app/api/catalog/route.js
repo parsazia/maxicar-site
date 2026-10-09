@@ -18,7 +18,7 @@ function normalizeProduct(item, index) {
   if (!name) return null;
   const rawPrice = item.price ?? item.price_toman ?? item.final_price ?? null;
   const parsedPrice = typeof rawPrice === "string"
-    ? Number(rawPrice.replace(/[\\s,٬،]/g, ""))
+    ? Number(rawPrice.replace(/[\s,٬،]/g, ""))
     : Number(rawPrice);
   const price = rawPrice !== null && rawPrice !== "" && Number.isFinite(parsedPrice) && parsedPrice > 0
     ? parsedPrice
