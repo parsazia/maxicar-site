@@ -32,14 +32,14 @@ function normalizeProduct(product) {
   const rawPrice = firstValue(product, ["price", "final_price", "sale_price", "current_price"]);
   const available = firstValue(product, ["available", "is_available", "in_stock"]);
   const stock = firstValue(product, ["stock", "stock_quantity", "quantity"]);
-  const condition = firstValue(product, ["condition", "product_condition", "quality"]);
+  const condition = firstValue(product, ["condition", "product_condition", "quality", "stock_type", "product_type"]);
   const image = firstValue(product, ["image", "image_url", "thumbnail", "main_image"]);
   const imageUrl = typeof image === "string" ? image : firstValue(image, ["url", "src"]);
   return {
     id: id === "" ? null : id,
     slug: String(firstValue(product, ["slug", "url_slug"], id || name)),
     name: String(name),
-    carName: String(firstValue(product, ["car_name", "vehicle_name", "brand_name"], categoryText || "قطعات نیسان")),
+    carName: String(firstValue(product, ["car_name", "vehicle_name", "vehicle"], "قطعات نیسان")),
     category: categoryText,
     condition: String(condition || ""),
     status: available === false || available === 0 ? "ناموجود" : stock !== "" && Number(stock) <= 0 ? "ناموجود" : "استعلام موجودی",
