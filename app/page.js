@@ -31,7 +31,7 @@ export default function Home() {
   }, []);
 
   const results = useMemo(() => {
-    const tokens = query.trim().split(/\\s+/).map(normalize).filter(Boolean);
+    const tokens = query.trim().split(/\s+/).map(normalize).filter(Boolean);
     if (!tokens.length) return [];
     return catalogProducts
       .filter((p) => condition === "همه" || p.condition === condition)
