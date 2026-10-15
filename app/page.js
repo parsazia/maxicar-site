@@ -47,7 +47,7 @@ export default function Home() {
       const textMatches = !normalizedQuery || normalize([p.name, p.carName, p.category, p.partNumber].join(" ")).includes(normalizedQuery);
       return conditionMatches && textMatches;
     });
-  }, [apiProducts, apiState, query, condition]);
+  }, [apiProducts, apiState, query, availability]);
   const carResults = useMemo(() => { const q = normalize(query); if (!q) return []; return cars.filter((car) => [car.name, car.en, car.slug].some((value) => normalize(value).includes(q) || q.includes(normalize(value)))); }, [query]);
   const showResults = query.trim().length > 0;
 
