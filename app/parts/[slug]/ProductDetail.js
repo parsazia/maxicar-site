@@ -70,7 +70,7 @@ export default function ProductDetail({ slug }) {
     event.preventDefault();
     if (!product || !customerName.trim() || !customerPhone.trim()) return;
     const message = [
-      "سلام، برای سفارش/استعلام قطعه از ماکسیکار پیام می‌دهم.",
+      "سلام، دربارهٔ این قطعه از ماکسیکار سؤال/استعلام دارم.",
       "قطعه: " + product.name,
       "شناسه محصول: " + product.id,
       "قیمت درج‌شده: " + formatPrice(product.price),
@@ -103,7 +103,7 @@ export default function ProductDetail({ slug }) {
           <h1>{product.name}</h1>
           <div className="statusPill"><span/> {product.status}</div>
           <h2 style={{fontSize:"1.35rem",margin:"16px 0"}}>{formatPrice(product.price)}</h2>
-          <a href="#order-request" className="primaryLink" style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center",margin:"0 0 16px",textDecoration:"none"}}><MessageCircle size={18}/> ثبت سفارش / استعلام این قطعه <ArrowLeft size={16}/></a>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:10,margin:"0 0 18px"}}><Link href={"/checkout?product="+encodeURIComponent(product.id)} className="primaryLink" style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center",textDecoration:"none"}}><ClipboardCheck size={18}/> خرید محصول <ArrowLeft size={16}/></Link><a href="#order-request" className="secondaryLink" style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center",padding:"12px 16px",border:"1px solid #cbd5e1",borderRadius:10,textDecoration:"none",fontWeight:600,color:"#12304a"}}><MessageCircle size={18}/> سؤال دارم / استعلام</a></div>
           {product.description ? <p className="detailIntro">{product.description}</p> : <p className="detailIntro">اطلاعات محصول از فروشگاه دریافت شده است. پیش از سفارش، سازگاری قطعه با مدل خودرو و موجودی نهایی را تأیید کنید.</p>}
           <div className="specTable">
             <div><span>شناسه محصول</span><b>{product.id}</b></div>
@@ -114,17 +114,17 @@ export default function ProductDetail({ slug }) {
           </div>
           <div className="detailWarning"><ShieldCheck size={20}/><span>قیمت و وضعیت موجودی را پیش از پرداخت از ماکسیکار تأیید کنید؛ وضعیت درج‌شده جایگزین تأیید سفارش نیست.</span></div>
           <section id="order-request" className="orderRequest" style={{marginTop:24,padding:20,border:"1px solid #dbe4ee",borderRadius:16,background:"#f8fafc"}}>
-            <h2 style={{fontSize:"1.2rem",margin:"0 0 8px"}}>درخواست سفارش یا استعلام</h2>
-            <p className="detailIntro" style={{marginBottom:16}}>اطلاعات زیر را وارد کنید تا پیام آماده شامل مشخصات همین قطعه در واتساپ باز شود. سفارش تا زمان تأیید موجودی و قیمت نهایی نمی‌شود.</p>
+            <h2 style={{fontSize:"1.2rem",margin:"0 0 8px"}}>سؤال یا استعلام دربارهٔ این قطعه</h2>
+            <p className="detailIntro" style={{marginBottom:16}}>اگر دربارهٔ سازگاری، وضعیت، قیمت یا موجودی سؤال دارید، اطلاعات زیر را وارد کنید تا پیام آماده در واتساپ باز شود.</p>
             <form onSubmit={requestOrder} style={{display:"grid",gap:12}}>
               <label style={{display:"grid",gap:6}}>نام و نام خانوادگی<input required value={customerName} onChange={(e)=>setCustomerName(e.target.value)} autoComplete="name" placeholder="نام شما" style={fieldStyle}/></label>
               <label style={{display:"grid",gap:6}}>شماره تماس<input required value={customerPhone} onChange={(e)=>setCustomerPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="شماره‌ای که با آن در دسترس هستید" style={fieldStyle}/></label>
               <label style={{display:"grid",gap:6}}>مدل خودرو و سال ساخت<input value={carModel} onChange={(e)=>setCarModel(e.target.value)} placeholder="مثلاً ماکسیما، مدل ۱۳۸۵" style={fieldStyle}/></label>
               <label style={{display:"grid",gap:6}}>توضیحات (اختیاری)<textarea value={customerNote} onChange={(e)=>setCustomerNote(e.target.value)} rows={3} placeholder="کد فنی، سمت قطعه یا پرسش شما" style={{...fieldStyle,resize:"vertical"}}/></label>
-              <button type="submit" className="primaryLink" style={{border:0,cursor:"pointer",justifyContent:"center"}}><MessageCircle size={17}/> ثبت درخواست و ادامه در واتساپ <ArrowLeft size={16}/></button>
+              <button type="submit" className="primaryLink" style={{border:0,cursor:"pointer",justifyContent:"center"}}><MessageCircle size={17}/> ارسال سؤال در واتساپ <ArrowLeft size={16}/></button>
             </form>
           </section>
-          <p className="demoNotice">این فرم اطلاعات را در سایت ذخیره نمی‌کند و پرداخت اینترنتی انجام نمی‌دهد؛ فقط پیام استعلام را برای ارسال در واتساپ آماده می‌کند.</p>
+          <p className="demoNotice">این فرم فقط پیام سؤال یا استعلام را در واتساپ آماده می‌کند و خریدی ثبت نمی‌کند.</p>
         </div>
       </section>
       {related.length > 0 && <section className="container innerSection"><div className="sectionTitle"><div><span className="eyebrow">ادامه جست‌وجو</span><h2>قطعات مرتبط</h2></div></div><div className="simpleProductList">{related.map((item) => <Link href={"/parts/" + item.id} key={item.id}><span className="listWrench"><Wrench size={18}/></span><span><b>{item.name}</b><small>{item.condition || "استعلام وضعیت"} · {formatPrice(item.price)}</small></span><ChevronLeft size={17}/></Link>)}</div></section>}
