@@ -103,6 +103,7 @@ export default function ProductDetail({ slug }) {
           <h1>{product.name}</h1>
           <div className="statusPill"><span/> {product.status}</div>
           <h2 style={{fontSize:"1.35rem",margin:"16px 0"}}>{formatPrice(product.price)}</h2>
+          <a href="#order-request" className="primaryLink" style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center",margin:"0 0 16px",textDecoration:"none"}}><MessageCircle size={18}/> ثبت سفارش / استعلام این قطعه <ArrowLeft size={16}/></a>
           {product.description ? <p className="detailIntro">{product.description}</p> : <p className="detailIntro">اطلاعات محصول از فروشگاه دریافت شده است. پیش از سفارش، سازگاری قطعه با مدل خودرو و موجودی نهایی را تأیید کنید.</p>}
           <div className="specTable">
             <div><span>شناسه محصول</span><b>{product.id}</b></div>
@@ -112,7 +113,7 @@ export default function ProductDetail({ slug }) {
             {product.brand && <div><span>برند</span><b>{product.brand}</b></div>}
           </div>
           <div className="detailWarning"><ShieldCheck size={20}/><span>قیمت و وضعیت موجودی را پیش از پرداخت از ماکسیکار تأیید کنید؛ وضعیت درج‌شده جایگزین تأیید سفارش نیست.</span></div>
-          <section className="orderRequest" style={{marginTop:24,padding:20,border:"1px solid #dbe4ee",borderRadius:16,background:"#f8fafc"}}>
+          <section id="order-request" className="orderRequest" style={{marginTop:24,padding:20,border:"1px solid #dbe4ee",borderRadius:16,background:"#f8fafc"}}>
             <h2 style={{fontSize:"1.2rem",margin:"0 0 8px"}}>درخواست سفارش یا استعلام</h2>
             <p className="detailIntro" style={{marginBottom:16}}>اطلاعات زیر را وارد کنید تا پیام آماده شامل مشخصات همین قطعه در واتساپ باز شود. سفارش تا زمان تأیید موجودی و قیمت نهایی نمی‌شود.</p>
             <form onSubmit={requestOrder} style={{display:"grid",gap:12}}>
@@ -120,7 +121,7 @@ export default function ProductDetail({ slug }) {
               <label style={{display:"grid",gap:6}}>شماره تماس<input required value={customerPhone} onChange={(e)=>setCustomerPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="شماره‌ای که با آن در دسترس هستید" style={fieldStyle}/></label>
               <label style={{display:"grid",gap:6}}>مدل خودرو و سال ساخت<input value={carModel} onChange={(e)=>setCarModel(e.target.value)} placeholder="مثلاً ماکسیما، مدل ۱۳۸۵" style={fieldStyle}/></label>
               <label style={{display:"grid",gap:6}}>توضیحات (اختیاری)<textarea value={customerNote} onChange={(e)=>setCustomerNote(e.target.value)} rows={3} placeholder="کد فنی، سمت قطعه یا پرسش شما" style={{...fieldStyle,resize:"vertical"}}/></label>
-              <button type="submit" className="primaryLink" style={{border:0,cursor:"pointer",justifyContent:"center"}}><MessageCircle size={17}/> ادامه در واتساپ <ArrowLeft size={16}/></button>
+              <button type="submit" className="primaryLink" style={{border:0,cursor:"pointer",justifyContent:"center"}}><MessageCircle size={17}/> ثبت درخواست و ادامه در واتساپ <ArrowLeft size={16}/></button>
             </form>
           </section>
           <p className="demoNotice">این فرم اطلاعات را در سایت ذخیره نمی‌کند و پرداخت اینترنتی انجام نمی‌دهد؛ فقط پیام استعلام را برای ارسال در واتساپ آماده می‌کند.</p>
