@@ -22,7 +22,7 @@ export default function ProductDetail({ slug }) {
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
-      if (!/^\\d+$/.test(String(slug))) {
+      if (!/^\d+$/.test(String(slug))) {
         setState("missing");
         return;
       }
