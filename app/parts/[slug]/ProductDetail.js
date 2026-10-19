@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ShieldCheck, Wrench, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ShieldCheck, Wrench, ClipboardCheck, MessageCircle } from "lucide-react";
 
 function formatPrice(value) {
   if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "برای قیمت روز استعلام بگیرید";
@@ -14,11 +14,15 @@ export default function ProductDetail({ slug }) {
   const [related, setRelated] = useState([]);
   const [state, setState] = useState("loading");
   const [error, setError] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [carModel, setCarModel] = useState("");
+  const [customerNote, setCustomerNote] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
-      if (!/^\d+$/.test(String(slug))) {
+      if (!/^\\d+$/.test(String(slug))) {
         setState("missing");
         return;
       }
@@ -62,6 +66,24 @@ export default function ProductDetail({ slug }) {
     return () => controller.abort();
   }, [slug]);
 
+  function requestOrder(event) {
+    event.preventDefault();
+    if (!product || !customerName.trim() || !customerPhone.trim()) return;
+    const message = [
+      "سلام، برای سفارش/استعلام قطعه از ماکسیکار پیام می‌دهم.",
+      "قطعه: " + product.name,
+      "شناسه محصول: " + product.id,
+      "قیمت درج‌شده: " + formatPrice(product.price),
+      "وضعیت درج‌شده: " + (product.status || "نامشخص"),
+      "نام: " + customerName.trim(),
+      "شماره تماس: " + customerPhone.trim(),
+      "خودرو و مدل: " + (carModel.trim() || "اعلام نشده"),
+      "توضیحات: " + (customerNote.trim() || "ندارد"),
+      "لطفاً موجودی، قیمت نهایی و سازگاری قطعه را تأیید کنید."
+    ].join("\\n");
+    window.open("https://wa.me/989939161210?text=" + encodeURIComponent(message), "_blank", "noopener,noreferrer");
+  }
+
   return <main className="innerPage">
     <header className="innerHeader"><div className="container innerHeaderRow"><Link href="/" className="brand"><span className="brandSymbol"><span>M</span></span><span className="brandWords"><b>ماکسیکار</b><small>مرجع تخصصی قطعات نیسان</small></span></Link><Link href="/" className="backHome"><ArrowLeft size={16}/> بازگشت به جست‌وجوی قطعات</Link></div></header>
     {state === "loading" && <section className="container productDetail"><p>در حال دریافت اطلاعات محصول از فروشگاه…</p></section>}
@@ -90,8 +112,18 @@ export default function ProductDetail({ slug }) {
             {product.brand && <div><span>برند</span><b>{product.brand}</b></div>}
           </div>
           <div className="detailWarning"><ShieldCheck size={20}/><span>قیمت و وضعیت موجودی را پیش از پرداخت از ماکسیکار تأیید کنید؛ وضعیت درج‌شده جایگزین تأیید سفارش نیست.</span></div>
-          <a className="primaryLink" href="/#contact"><ClipboardCheck size={17}/> راهنمای استعلام این قطعه</a>
-          <p className="demoNotice">این صفحه از API واقعی فروشگاه داده دریافت می‌کند. ثبت سفارش و پرداخت در این نسخه فعال نیست.</p>
+          <section className="orderRequest" style={{marginTop:24,padding:20,border:"1px solid #dbe4ee",borderRadius:16,background:"#f8fafc"}}>
+            <h2 style={{fontSize:"1.2rem",margin:"0 0 8px"}}>درخواست سفارش یا استعلام</h2>
+            <p className="detailIntro" style={{marginBottom:16}}>اطلاعات زیر را وارد کنید تا پیام آماده شامل مشخصات همین قطعه در واتساپ باز شود. سفارش تا زمان تأیید موجودی و قیمت نهایی نمی‌شود.</p>
+            <form onSubmit={requestOrder} style={{display:"grid",gap:12}}>
+              <label style={{display:"grid",gap:6}}>نام و نام خانوادگی<input required value={customerName} onChange={(e)=>setCustomerName(e.target.value)} autoComplete="name" placeholder="نام شما" style={fieldStyle}/></label>
+              <label style={{display:"grid",gap:6}}>شماره تماس<input required value={customerPhone} onChange={(e)=>setCustomerPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="شماره‌ای که با آن در دسترس هستید" style={fieldStyle}/></label>
+              <label style={{display:"grid",gap:6}}>مدل خودرو و سال ساخت<input value={carModel} onChange={(e)=>setCarModel(e.target.value)} placeholder="مثلاً ماکسیما، مدل ۱۳۸۵" style={fieldStyle}/></label>
+              <label style={{display:"grid",gap:6}}>توضیحات (اختیاری)<textarea value={customerNote} onChange={(e)=>setCustomerNote(e.target.value)} rows={3} placeholder="کد فنی، سمت قطعه یا پرسش شما" style={{...fieldStyle,resize:"vertical"}}/></label>
+              <button type="submit" className="primaryLink" style={{border:0,cursor:"pointer",justifyContent:"center"}}><MessageCircle size={17}/> ادامه در واتساپ <ArrowLeft size={16}/></button>
+            </form>
+          </section>
+          <p className="demoNotice">این فرم اطلاعات را در سایت ذخیره نمی‌کند و پرداخت اینترنتی انجام نمی‌دهد؛ فقط پیام استعلام را برای ارسال در واتساپ آماده می‌کند.</p>
         </div>
       </section>
       {related.length > 0 && <section className="container innerSection"><div className="sectionTitle"><div><span className="eyebrow">ادامه جست‌وجو</span><h2>قطعات مرتبط</h2></div></div><div className="simpleProductList">{related.map((item) => <Link href={"/parts/" + item.id} key={item.id}><span className="listWrench"><Wrench size={18}/></span><span><b>{item.name}</b><small>{item.condition || "استعلام وضعیت"} · {formatPrice(item.price)}</small></span><ChevronLeft size={17}/></Link>)}</div></section>}
@@ -99,3 +131,5 @@ export default function ProductDetail({ slug }) {
     <footer className="innerFooter"><div className="container footerBottom"><span>ماکسیکار · قطعات نیسان</span><Link href="/">بازگشت به صفحه اصلی</Link></div></footer>
   </main>;
 }
+
+const fieldStyle = {width:"100%",boxSizing:"border-box",padding:"12px 14px",border:"1px solid #cbd5e1",borderRadius:10,font:"inherit",background:"#fff",color:"#0f172a"};
