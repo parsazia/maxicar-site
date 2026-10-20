@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRawProduct, patchRawProduct } from "../../../../lib/mixin";
+import { getPricingApiConfig, getPricingRawProduct, patchRawProduct } from "../../../../lib/mixin";
 import { calculateAedSalePrice } from "../../../../lib/aed-pricing";
 import { getAedRate } from "../../../../lib/tgju-aed";
 
@@ -19,6 +19,9 @@ export async function POST(request) {
   if (process.env.VERCEL_ENV !== "preview") return NextResponse.json({ error: "PREVIEW_ONLY" }, { status: 404 });
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "ORIGIN_REJECTED" }, { status: 403 });
+  try { getPricingApiConfig(); } catch (error) {
+    return NextResponse.json({ error: error.code || "PRICING_SANDBOX_NOT_CONFIGURED", message: error.message || "API آزمایشی مستقل تنظیم نشده است؛ سایت فعال تغییر نمی‌کند." }, { status: error.status || 503 });
+  }
   try {
     const body = await request.json();
     if (body?.confirm !== true) return NextResponse.json({ error: "EXPLICIT_CONFIRMATION_REQUIRED", message: "تأیید صریح لازم است." }, { status: 400 });
@@ -33,7 +36,7 @@ export async function POST(request) {
         results.push({ id, ok: false, reason: "شناسه یا قیمت پایه درهم معتبر نیست." }); continue;
       }
       try {
-        const before = await getRawProduct(id);
+        const before = await getPricingRawProduct(id);
         if (!stockEligible(before)) { results.push({ id, ok: false, reason: "موجودی محصول تأیید نشده یا ناموجود است؛ تغییر داده نشد." }); continue; }
         const oldFields = before?.extra_fields;
         if (oldFields !== undefined && oldFields !== null && (Array.isArray(oldFields) || typeof oldFields !== "object")) {
@@ -41,13 +44,13 @@ export async function POST(request) {
         }
         const mergedFields = { ...(oldFields || {}), maxicar_base_price_aed: String(basePriceAed) };
         await patchRawProduct(id, { extra_fields: mergedFields });
-        const afterFields = await getRawProduct(id);
+        const afterFields = await getPricingRawProduct(id);
         if (String(afterFields?.extra_fields?.maxicar_base_price_aed ?? "") !== String(basePriceAed)) {
           results.push({ id, ok: false, reason: "ذخیره قیمت پایه درهم از API تأیید نشد؛ قیمت فروش تغییر داده نشد." }); continue;
         }
         const calculated = calculateAedSalePrice(basePriceAed, rate.rateToman);
         await patchRawProduct(id, { price: calculated.salePriceToman });
-        const verified = await getRawProduct(id);
+        const verified = await getPricingRawProduct(id);
         if (Number(verified?.price) !== calculated.salePriceToman) {
           results.push({ id, ok: false, reason: "قیمت فروش پس از نوشتن تأیید نشد؛ بررسی دستی لازم است.", basePriceSaved: true, expectedPrice: calculated.salePriceToman, observedPrice: verified?.price ?? null }); continue;
         }
