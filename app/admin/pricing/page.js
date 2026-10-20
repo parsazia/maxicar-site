@@ -13,10 +13,11 @@ function parseRows(value) {
   const lines = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const items = [];
   for (const line of lines) {
-    const parts = line.split(/[\t,;، ]+/).filter(Boolean);
-    if (parts.length < 2) throw new Error("هر خط باید شامل شناسه محصول و قیمت پایه درهم باشد؛ نمونه: 153, 120");
-    const id = digits(parts[0]).trim();
-    const basePriceAed = Number(digits(parts[1]).replace(/,/g, ""));
+    const match = line.match(/^\s*([0-9۰-۹٠-٩]+)[\t,;، ]+(.+?)\s*$/);
+    if (!match) throw new Error("هر خط باید شامل شناسه محصول و قیمت پایه درهم باشد؛ نمونه: 153, 120");
+    const id = digits(match[1]).trim();
+    const amount = digits(match[2]).replace(/[\s,٬]/g, "");
+    const basePriceAed = Number(amount);
     if (!/^\d+$/.test(id) || !Number.isFinite(basePriceAed) || basePriceAed <= 0) throw new Error("خط نامعتبر: " + line);
     items.push({ id, basePriceAed });
   }
