@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const inputStyle = { width: "100%", boxSizing: "border-box", padding: "12px", border: "1px solid #cbd5e1", borderRadius: 10, font: "inherit", direction: "ltr" };
@@ -38,6 +38,11 @@ export default function PricingAdminPage() {
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [sandboxStatus, setSandboxStatus] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/pricing/status", { cache: "no-store" }).then(r => r.json()).then(setSandboxStatus).catch(() => setSandboxStatus({ canApply: false, message: "وضعیت API آزمایشی قابل بررسی نیست." }));
+  }, []);
 
   async function getRate() {
     const response = await fetch("/api/pricing/rate", { cache: "no-store" });
@@ -96,6 +101,7 @@ export default function PricingAdminPage() {
         <div><div style={{ color: "#17658f", fontWeight: 800, marginBottom: 6 }}>ماکسیکار · محیط آزمایشی</div><h1 style={{ margin: 0, fontSize: "clamp(1.5rem,4vw,2.1rem)" }}>مدیریت قیمت بر پایه درهم</h1></div>
         <Link href="/" style={{ color: "#145a86", fontWeight: 700, textDecoration: "none" }}>بازگشت به فروشگاه</Link>
       </header>
+      {sandboxStatus && !sandboxStatus.canApply && <section role="status" style={{ background: "#fff7e6", border: "1px solid #ead29b", borderRadius: 14, padding: 14, marginBottom: 16, lineHeight: 1.9 }}><b>اعمال قیمت فعلاً قفل است.</b><div>{sandboxStatus.message}</div><div>سایت فعال maxicar.ir به‌هیچ‌وجه مقصد نوشتن این ابزار نیست.</div></section>}
       <section style={{ background: "white", border: "1px solid #dce4ed", borderRadius: 16, padding: 18, marginBottom: 16 }}>
         <h2 style={{ fontSize: "1.1rem", marginTop: 0 }}>۱. قیمت پایه محصولات</h2>
         <p style={{ lineHeight: 1.9, marginTop: 0 }}>در هر خط، شناسه محصول و قیمت پایه آن به درهم را وارد کنید. نمونه: <code dir="ltr">153, 120</code>. قیمت درهم باید قیمت پایه‌ای باشد که شما اعلام می‌کنید؛ از قیمت فعلی تومان به‌صورت خودکار استخراج نمی‌شود.</p>
@@ -125,7 +131,7 @@ export default function PricingAdminPage() {
             <td style={{ padding: 10, borderBottom: "1px solid #edf1f5", color: item.ok ? "#17633c" : "#a12828" }}>{item.ok ? "قابل اعمال · " + item.stockStatus : item.reason}</td>
           </tr>)}</tbody>
         </table></div>
-        <button onClick={applyPrices} disabled={busy || !preview.results.some(item => item.ok)} style={{ ...buttonStyle, marginTop: 16, opacity: busy ? .65 : 1 }}>{busy ? "در حال اعمال…" : "۴. تأیید و اعمال قیمت‌های واجد شرایط"}</button>
+        <button onClick={applyPrices} disabled={busy || !sandboxStatus?.canApply || !preview.results.some(item => item.ok)} style={{ ...buttonStyle, marginTop: 16, opacity: busy ? .65 : 1 }}>{busy ? "در حال اعمال…" : "۴. تأیید و اعمال قیمت‌های واجد شرایط"}</button>
       </section>}
       {result && <section style={{ background: "white", border: "1px solid #dce4ed", borderRadius: 16, padding: 16 }}>
         <h2 style={{ marginTop: 0 }}>گزارش اجرای قیمت‌گذاری</h2>
