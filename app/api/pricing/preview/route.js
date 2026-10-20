@@ -21,7 +21,7 @@ function stockEligibility(product) {
   const stock = product?.stock ?? product?.stock_quantity ?? product?.quantity;
   if (available === false || available === 0 || available === "false" || ["unavailable", "out_of_stock", "ناموجود"].includes(type)) return { eligible: false, reason: "محصول ناموجود است." };
   if (type === "unlimited" || type === "نامحدود" || type === "available" || type === "موجود" || available === true || available === 1 || available === "true") return { eligible: true, reason: "موجود" };
-  if ((type === "limited" || type === "محدود") && stock !== null && stock !== undefined && stock !== "" && Number(stock) > 0) return { eligible: true, reason: "موجودی محدود" };
+  if ((type === "limited" || type === "محدود") && (stock === null || stock === undefined || stock === "" || Number(stock) > 0)) return { eligible: true, reason: "موجودی محدود" };
   return { eligible: false, reason: "وضعیت موجودی صریحاً تأیید نشده است." };
 }
 
