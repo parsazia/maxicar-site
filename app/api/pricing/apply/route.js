@@ -12,7 +12,7 @@ function stockEligible(product) {
   const stock = product?.stock ?? product?.stock_quantity ?? product?.quantity;
   if (available === false || available === 0 || available === "false" || ["unavailable", "out_of_stock", "ناموجود"].includes(type)) return false;
   if (["unlimited", "نامحدود", "available", "موجود"].includes(type) || available === true || available === 1 || available === "true") return true;
-  return (type === "limited" || type === "محدود") && stock !== null && stock !== undefined && stock !== "" && Number(stock) > 0;
+  return (type === "limited" || type === "محدود") && (stock === null || stock === undefined || stock === "" || Number(stock) > 0);
 }
 
 export async function POST(request) {
