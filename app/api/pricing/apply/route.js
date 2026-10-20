@@ -56,6 +56,18 @@ export async function POST(request) {
         results.push({ id, ok: false, reason: error.message || "به‌روزرسانی محصول ناموفق بود." });
       }
     }
+    console.info("[aed-pricing-audit]", JSON.stringify({
+      at: new Date().toISOString(),
+      source: rate.source,
+      sourceRateRial: rate.sourceRateRial,
+      rateToman: rate.rateToman,
+      results: results.map(item => ({
+        id: item.id, ok: item.ok, reason: item.reason || null,
+        basePriceAed: item.basePriceAed ?? null,
+        previousPrice: item.previousPrice ?? null,
+        salePriceToman: item.salePriceToman ?? null,
+      })),
+    }));
     return NextResponse.json({ rate, results, applied: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return NextResponse.json({ error: "APPLY_FAILED", message: error.message || "اعمال قیمت‌ها ناموفق بود." }, { status: 503, headers: { "Cache-Control": "no-store" } });
