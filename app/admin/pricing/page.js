@@ -59,6 +59,17 @@ export default function PricingAdminPage() {
     finally { setBusy(false); }
   }
 
+  async function makeSavedPreview() {
+    setBusy(true); setError(""); setResult(null); setPreview(null);
+    try {
+      const response = await fetch("/api/pricing/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ useSaved: true }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "محاسبه قیمت‌های ذخیره‌شده ناموفق بود.");
+      setRate(data.rate); setPreview({ ...data, items: data.results.filter(item => item.ok).map(item => ({ id: item.id, basePriceAed: item.basePriceAed })) });
+    } catch (e) { setError(e.message || "خطا در پیش‌نمایش قیمت‌های ذخیره‌شده."); }
+    finally { setBusy(false); }
+  }
+
   async function applyPrices() {
     const valid = preview?.results?.filter(item => item.ok) || [];
     if (!valid.length) { setError("هیچ محصول واجد شرایطی برای اعمال قیمت وجود ندارد."); return; }
@@ -90,7 +101,8 @@ export default function PricingAdminPage() {
         <p style={{ lineHeight: 1.9, marginTop: 0 }}>در هر خط، شناسه محصول و قیمت پایه آن به درهم را وارد کنید. نمونه: <code dir="ltr">153, 120</code>. قیمت درهم باید قیمت پایه‌ای باشد که شما اعلام می‌کنید؛ از قیمت فعلی تومان به‌صورت خودکار استخراج نمی‌شود.</p>
         <textarea value={rowsText} onChange={e => setRowsText(e.target.value)} rows={7} placeholder={"153, 120\n154, 85.5\n155, 240"} style={{ ...inputStyle, direction: "ltr", textAlign: "left", resize: "vertical" }} />
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-          <button onClick={makePreview} disabled={busy} style={{ ...buttonStyle, opacity: busy ? .65 : 1 }}>{busy ? "در حال پردازش…" : "۲. دریافت نرخ و پیش‌نمایش"}</button>
+          <button onClick={makePreview} disabled={busy} style={{ ...buttonStyle, opacity: busy ? .65 : 1 }}>{busy ? "در حال پردازش…" : "۲. پیش‌نمایش قیمت‌های واردشده"}</button>
+          <button onClick={makeSavedPreview} disabled={busy} style={{ ...buttonStyle, background: "#17633c", opacity: busy ? .65 : 1 }}>{busy ? "در حال پردازش…" : "محاسبه مجدد قیمت‌های ذخیره‌شده"}</button>
           <button onClick={async () => { setError(""); try { await getRate(); } catch(e) { setError(e.message); } }} disabled={busy} style={{ ...buttonStyle, background: "#e8eef4", color: "#203449" }}>بررسی نرخ درهم</button>
         </div>
       </section>
