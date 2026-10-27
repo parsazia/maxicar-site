@@ -1,4 +1,4 @@
-import { jsonError, supabaseConfig } from "@/lib/cashback-server";
+import { jsonError, supabaseConfig } from "../../../../lib/cashback-server";
 
 export async function POST(request) {
   let body;
