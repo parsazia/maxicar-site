@@ -15,7 +15,6 @@ app.use((_req, res, next) => {
   return next();
 });
 
-const BASE_URL = "https://maxicar.ir";
 const MAX_BODY_BYTES = 256 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 30;
@@ -62,13 +61,36 @@ function productsPath() {
 }
 
 async function upstream(method, path, query, body) {
+  if (method !== "GET") {
+    const error = new Error("This service is read-only. Product creation, updates, and deletion are disabled.");
+    error.code = "READ_ONLY_MODE";
+    throw error;
+  }
+  const baseUrl = process.env.MAXICAR_API_BASE_URL;
+  if (!baseUrl) {
+    const error = new Error("A dedicated staging API base URL is not configured.");
+    error.code = "STAGING_API_NOT_CONFIGURED";
+    throw error;
+  }
+  let parsedBase;
+  try { parsedBase = new URL(baseUrl); } catch {
+    const error = new Error("MAXICAR_API_BASE_URL must be a valid HTTPS URL.");
+    error.code = "INVALID_STAGING_API_URL";
+    throw error;
+  }
+  const host = parsedBase.hostname.toLowerCase();
+  if (parsedBase.protocol !== "https:" || host === "maxicar.ir" || host.endsWith(".maxicar.ir")) {
+    const error = new Error("The live Maxicar domain is forbidden. Configure a separate staging API host.");
+    error.code = "LIVE_API_HOST_FORBIDDEN";
+    throw error;
+  }
   const apiKey = process.env.MAXICAR_API_KEY;
   if (!apiKey) {
     const error = new Error("The upstream API key is not configured.");
     error.code = "API_KEY_NOT_CONFIGURED";
     throw error;
   }
-  const url = new URL(path, BASE_URL);
+  const url = new URL(path, parsedBase);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
@@ -135,29 +157,7 @@ const tools = [
       additionalProperties: false,
     },
   },
-  {
-    name: "create_product",
-    description: "Create a product through the Maxicar Open API. This changes live store data; call only when the user explicitly asks to create the product and has supplied the required fields.",
-    inputSchema: {
-      type: "object",
-      properties: { product: { type: "object", additionalProperties: true } },
-      required: ["product"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "update_product",
-    description: "Update a product through the Maxicar Open API. This changes live store data; call only when the user explicitly asks for this specific update. Send only the fields that should change.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        product_id: { type: ["string", "integer"], pattern: "^[0-9]+$" },
-        changes: { type: "object", additionalProperties: true },
-      },
-      required: ["product_id", "changes"],
-      additionalProperties: false,
-    },
-  },
+
 ];
 
 async function callTool(name, args) {
@@ -172,16 +172,6 @@ async function callTool(name, args) {
     if (!/^\d+$/.test(id)) throw new Error("product_id must be numeric.");
     return upstream("GET", base + encodeURIComponent(id) + "/");
   }
-  if (name === "create_product") {
-    if (!args.product || typeof args.product !== "object" || Array.isArray(args.product)) throw new Error("product must be a JSON object.");
-    return upstream("POST", base, undefined, args.product);
-  }
-  if (name === "update_product") {
-    const id = String(args.product_id || "");
-    if (!/^\d+$/.test(id)) throw new Error("product_id must be numeric.");
-    if (!args.changes || typeof args.changes !== "object" || Array.isArray(args.changes) || !Object.keys(args.changes).length) throw new Error("changes must be a non-empty JSON object.");
-    return upstream("PATCH", base + encodeURIComponent(id) + "/", undefined, args.changes);
-  }
   throw new Error("Unknown tool: " + name);
 }
 
@@ -190,11 +180,12 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "maxicar-management-mcp",
-    mode: "product-management",
+    mode: "read-only-staging",
     configured: {
       bridgeToken: Boolean(process.env.MAXICAR_BRIDGE_TOKEN),
       apiKey: Boolean(process.env.MAXICAR_API_KEY),
       productsPath: Boolean(process.env.MAXICAR_PRODUCTS_PATH && process.env.MAXICAR_PRODUCTS_PATH.startsWith("/api/v4/")),
+      stagingApiBaseUrl: Boolean(process.env.MAXICAR_API_BASE_URL),
     },
   });
 });
