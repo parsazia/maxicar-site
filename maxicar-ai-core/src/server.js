@@ -5,6 +5,16 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "256kb", strict: true }));
 
+// This service is Preview-only on Vercel. Fail closed before exposing health or MCP routes.
+// Local development remains available when VERCEL is not set.
+app.use((_req, res, next) => {
+  if (process.env.VERCEL === "1" && process.env.VERCEL_ENV !== "preview") {
+    res.set("Cache-Control", "no-store");
+    return res.status(404).json({ error: "preview_only" });
+  }
+  return next();
+});
+
 const BASE_URL = "https://maxicar.ir";
 const MAX_BODY_BYTES = 256 * 1024;
 const RATE_WINDOW_MS = 60_000;
