@@ -1,5 +1,6 @@
 {
   "name": "maxicar-staging-api",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "main": "api/[...path].js"
 }
