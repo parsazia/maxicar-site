@@ -34,6 +34,7 @@ export default function CashbackAccountPage() {
   return <main dir="rtl" style={{maxWidth:900,margin:"40px auto",padding:"0 18px",color:"#182230"}}>
     <Link href="/" style={{color:"#173d70"}}>← فروشگاه ماکسیکار</Link>
     <h1>حساب کاربری و بازگشت وجه</h1>
+    <Link href="/account/offers" style={{display:"inline-block",margin:"8px 0 16px",color:"#173d70",fontWeight:700}}>تنظیم پیشنهادهای دنبال‌شده و اعلان‌ها ←</Link>
     <p>درخواست بازگشت وجه فقط بر اساس سفارش‌های پرداخت‌شده و تأییدشده محاسبه می‌شود. مبلغ را شما وارد نمی‌کنید؛ سیستم آن را محاسبه می‌کند.</p>
     <button onClick={requestRefund} disabled={busy || !token} style={{background:"#173d70",color:"#fff",border:0,borderRadius:10,padding:"12px 20px",fontSize:15,cursor:"pointer"}}>{busy ? "در حال ثبت..." : "ثبت درخواست بازگشت وجه ماه جاری"}</button>
     <button onClick={logout} style={{marginRight:10,padding:"11px 16px",borderRadius:10,border:"1px solid #cbd5e1",background:"#fff"}}>خروج</button>
