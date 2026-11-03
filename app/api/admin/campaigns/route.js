@@ -1,5 +1,5 @@
-import { isAdmin, jsonError, requireUser, supabaseConfig, supabaseRest } from "../../../../lib/cashback-server";
-import { validateCampaign } from "../../../../lib/campaigns-server";
+import { isAdmin, jsonError, requireUser, supabaseRest } from "../../../../lib/cashback-server";
+import { validateCampaign, notifyCampaignSubscribers } from "../../../../lib/campaigns-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +41,13 @@ export async function POST(request) {
     body: JSON.stringify({ ...campaign, created_by: access.auth.user.id }),
   });
   if (!response.ok) return jsonError(data?.message || "ذخیره کمپین ناموفق بود.", 503);
-  return Response.json({ campaign: data?.[0] || data }, { status: 201, headers: { "Cache-Control": "no-store" } });
+  const saved = data?.[0] || data;
+  let notificationWarning = null;
+  if (saved?.status === "published") {
+    try { await notifyCampaignSubscribers(access.auth.cfg, saved); }
+    catch { notificationWarning = "کمپین منتشر شد، اما ثبت اعلان دنبال‌کنندگان انجام نشد."; }
+  }
+  return Response.json({ campaign: saved, notificationWarning }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
 
 export async function PATCH(request) {
@@ -57,5 +63,10 @@ export async function PATCH(request) {
   });
   if (!response.ok) return jsonError(data?.message || "به‌روزرسانی کمپین ناموفق بود.", 503);
   if (!data?.length) return jsonError("کمپین پیدا نشد.", 404);
-  return Response.json({ campaign: data[0] }, { headers: { "Cache-Control": "no-store" } });
+  let notificationWarning = null;
+  if (data[0]?.status === "published") {
+    try { await notifyCampaignSubscribers(access.auth.cfg, data[0]); }
+    catch { notificationWarning = "کمپین منتشر شد، اما ثبت اعلان دنبال‌کنندگان انجام نشد."; }
+  }
+  return Response.json({ campaign: data[0], notificationWarning }, { headers: { "Cache-Control": "no-store" } });
 }
