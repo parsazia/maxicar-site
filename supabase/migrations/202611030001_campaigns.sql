@@ -56,3 +56,28 @@ $$;
 drop trigger if exists campaigns_touch_updated_at on public.campaigns;
 create trigger campaigns_touch_updated_at before update on public.campaigns
 for each row execute function public.touch_campaign_updated_at();
+
+-- Customer opt-ins and in-site campaign notifications.
+create table if not exists public.campaign_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references auth.users(id) on delete cascade,
+  audience text not null check (audience in ('all','members','maxima','teana','murano')),
+  created_at timestamptz not null default now(),
+  unique(customer_id,audience)
+);
+create index if not exists campaign_subscriptions_audience_idx on public.campaign_subscriptions(audience,customer_id);
+
+create table if not exists public.campaign_notifications (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references auth.users(id) on delete cascade,
+  campaign_id uuid not null references public.campaigns(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  read_at timestamptz,
+  unique(customer_id,campaign_id)
+);
+create index if not exists campaign_notifications_customer_idx on public.campaign_notifications(customer_id,created_at desc);
+
+alter table public.campaign_subscriptions enable row level security;
+alter table public.campaign_notifications enable row level security;
+revoke all on public.campaign_subscriptions,public.campaign_notifications from anon,authenticated;
+grant all on public.campaign_subscriptions,public.campaign_notifications to service_role;
