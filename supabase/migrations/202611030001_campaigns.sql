@@ -29,7 +29,7 @@ create index if not exists campaigns_public_window_idx on public.campaigns(statu
 create index if not exists campaigns_type_created_idx on public.campaigns(campaign_type, created_at desc);
 
 create table if not exists public.campaign_events (
-  id bigint generated always as identity primary key,
+  id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.campaigns(id) on delete cascade,
   event_type text not null check (event_type in ('view','click','order')),
   session_key text,
