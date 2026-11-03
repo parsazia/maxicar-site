@@ -9,7 +9,7 @@ export async function GET(request) {
   try {
     const token = request.headers.get("authorization") || "";
     let isMember = false;
-    if (/^Bearer\\s+/i.test(token)) {
+    if (/^Bearer\s+/i.test(token)) {
       const auth = await requireUser(request);
       isMember = !auth.error;
     }
