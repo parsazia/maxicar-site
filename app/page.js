@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Search, CarFront, Wrench, ShieldCheck, PackageCheck, Headphones, ChevronLeft, Tag, Ship, BadgePercent, Truck, CreditCard, Menu, X, CircleHelp } from "lucide-react";
 import { cars, systems, products, searchCatalog, normalize } from "./data/catalog";
+import CampaignStories from "./components/campaign-stories";
 
 const serviceCards = [
   { title: "فروشگاه قطعات", text: "جست‌وجو و خرید قطعات نیسان ماکسیما، مورانو و تیانا", action: "مشاهده قطعات", href: "#sample-parts", image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=900&q=85", icon: Wrench, kind: "parts" },
@@ -99,6 +100,8 @@ export default function Home() {
         <div className="serviceBody"><div className="serviceTitle"><span><Icon size={21}/></span><h2>{item.title}</h2></div><p>{item.text}</p><Link className="serviceLink" href={item.href}>{item.action}<ArrowLeft size={16}/></Link></div>
       </article>; })}</div>
     </section>
+
+    <CampaignStories />
 
     <section className="container promotionSection">
       <Link href="/special-offers" className="promotionBanner" aria-label="مشاهده صفحه تخفیفات ویژه">

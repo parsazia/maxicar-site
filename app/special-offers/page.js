@@ -1,25 +1,19 @@
+"use client";
+import {useEffect,useState} from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowLeft, BadgePercent, Tag, Search, CarFront } from "lucide-react";
-
-export const metadata = {
-  title: "تخفیفات ویژه ماکسیکار",
-  description: "مشاهده پیشنهادها و شرایط تخفیف محصولات ماکسیکار.",
-};
-
-export default function SpecialOffersPage() {
-  return <main>
-    <div className="announcement"><div className="container announcementInner"><span>ماکسیکار | پیشنهادهای ویژه</span><span className="announcementSide">صفحه اختصاصی تخفیفات</span></div></div>
-    <header className="siteHeader container">
-      <Link href="/" className="brand"><span className="brandSymbol"><span>M</span></span><span className="brandWords"><b>ماکسیکار</b><small>قطعات · واردات · خودرو</small></span></Link>
-      <nav className="desktopNav"><Link href="/">صفحه اصلی</Link><Link href="/#sample-parts">فروشگاه قطعات</Link><Link href="/import-trade">واردات قطعات</Link><Link href="/vehicles">خرید و فروش خودرو</Link></nav>
-      <Link className="headerAction" href="/#search"><Search size={17}/><span>جست‌وجوی قطعه</span></Link>
-    </header>
-    <section className="offersHero"><div className="container offersHeroInner"><div><span className="promotionEyebrow"><BadgePercent size={18}/> صفحه پیشنهادهای ماکسیکار</span><h1>تخفیفات ویژه</h1><p>در این صفحه، جزئیات هر پیشنهاد، محصولات مشمول و شرایط استفاده از تخفیف نمایش داده می‌شود.</p><Link className="offersPrimary" href="/#sample-parts">مشاهده محصولات <ArrowLeft size={17}/></Link></div><div className="offersIcon"><Tag size={96} strokeWidth={1.1}/><span>%</span></div></div></section>
-    <section className="container offersContent"><div className="offersIntro"><span className="eyebrow">اطلاعات پیشنهادها</span><h2>قبل از استفاده از تخفیف چه چیزی را بررسی کنید؟</h2><p>برای هر تخفیف، اطلاعات مربوط به همان پیشنهاد باید جداگانه بررسی شود. مبلغ یا درصد تخفیف، محصول یا محصولات مشمول، مدت اعتبار و هر شرط دیگری فقط در صورتی نمایش داده می‌شود که برای آن پیشنهاد مشخص شده باشد.</p></div>
-      <div className="offersChecklist"><article><span><Tag size={20}/></span><div><b>محصولات مشمول</b><p>بررسی کنید تخفیف مربوط به کدام محصول یا محصولات است.</p></div></article><article><span><BadgePercent size={20}/></span><div><b>میزان تخفیف</b><p>مبلغ یا درصد تخفیف باید در توضیحات همان پیشنهاد درج شود؛ در این طرح عددی از پیش فرض نشده است.</p></div></article><article><span><CarFront size={20}/></span><div><b>سازگاری با خودرو</b><p>پیش از سفارش، مدل خودرو و مشخصات قطعه را با محصول انتخاب‌شده تطبیق دهید.</p></div></article></div>
-      <div className="offersNotice"><b>توجه</b><p>جزئیات تخفیف فعال در این نمونه هنوز به داده‌های واقعی پیشنهادها متصل نشده است؛ بنابراین این صفحه مبلغ، درصد یا تاریخ اعتبار تأییدنشده‌ای نمایش نمی‌دهد.</p></div>
-      <div className="offersBottom"><div><h2>دنبال قطعه مشخصی هستید؟</h2><p>جست‌وجو را با نام قطعه، مدل خودرو یا کد فنی شروع کنید.</p></div><Link href="/#search" className="offersPrimary">جست‌وجوی قطعه <ArrowLeft size={17}/></Link></div>
-    </section>
-    <footer><div className="container footerBottom"><Link href="/">بازگشت به صفحه اصلی ماکسیکار</Link><span>ماکسیکار | قطعات · واردات · خودرو</span></div></footer>
-  </main>;
+import {ArrowLeft,BadgePercent,Clock3,Tag} from "lucide-react";
+export default function SpecialOffersPage(){
+ const [items,setItems]=useState([]),[error,setError]=useState("");
+ useEffect(()=>{fetch("/api/campaigns",{headers:typeof window!=="undefined"&&localStorage.getItem("maxicar_access_token")?{Authorization:"Bearer "+localStorage.getItem("maxicar_access_token")}:{},cache:"no-store"}).then(r=>r.json()).then(d=>{setItems(d.campaigns||[]);(d.campaigns||[]).forEach(c=>fetch("/api/campaigns/events",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({campaign_id:c.id,event_type:"view"})}).catch(()=>{}));if(d.message)setError(d.message)}).catch(()=>setError("اتصال به پیشنهادهای ویژه برقرار نشد."))},[]);
+ const fa=n=>Number(n||0).toLocaleString("fa-IR");
+ const discount=c=>c.discount_type==="percent"?fa(c.discount_value)+"٪ تخفیف":fa(c.discount_value)+" تومان تخفیف";
+ return <main dir="rtl"><div className="announcement"><div className="container announcementInner"><span>ماکسیکار | ویترین داغ</span><span className="announcementSide">پیشنهادهای زمان‌دار و فروش ویژه</span></div></div>
+ <header className="siteHeader container"><Link href="/" className="brand"><span className="brandSymbol"><span>M</span></span><span className="brandWords"><b>ماکسیکار</b><small>قطعات · واردات · خودرو</small></span></Link><nav className="desktopNav"><Link href="/">صفحه اصلی</Link><Link href="/#sample-parts">فروشگاه قطعات</Link><Link href="/vehicles">خرید و فروش خودرو</Link></nav><Link className="headerAction" href="/#search">جست‌وجوی قطعه</Link></header>
+ <section className="offersHero"><div className="container offersHeroInner"><div><span className="promotionEyebrow"><BadgePercent size={18}/> ویترین داغ ماکسیکار</span><h1>پیشنهادهایی که نباید از دست بدهید</h1><p>تخفیف‌های تأییدشده، پیشنهادهای محدود و فروش‌های زمان‌دار قطعات نیسان.</p><Link className="offersPrimary" href="/#sample-parts">مشاهده قطعات <ArrowLeft size={17}/></Link></div><div className="offersIcon"><Tag size={96} strokeWidth={1.1}/><span>%</span></div></div></section>
+ <section className="container offersContent"><div className="offersIntro"><span className="eyebrow">پیشنهادهای فعال</span><h2>فرصت‌های فعلی ماکسیکار</h2><p>فقط پیشنهادهایی نمایش داده می‌شوند که مدیر منتشر کرده، زمانشان شروع شده و موجودی آن‌ها تأیید شده باشد.</p></div>
+ {error&&<div className="offersNotice"><b>اطلاع</b><p>{error}</p></div>}{!items.length&&!error&&<div className="offersNotice"><b>در حال حاضر پیشنهاد فعالی وجود ندارد.</b><p>با انتشار کمپین جدید، استوری و جزئیات آن در همین صفحه نمایش داده می‌شود.</p></div>}
+ <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:18}}>{items.map(c=><article id={"campaign-"+c.id} key={c.id} style={{border:"1px solid #e2e8f0",borderRadius:16,overflow:"hidden",background:"#fff",scrollMarginTop:24}}><div style={{height:190,background:"#edf2f7",position:"relative",display:"grid",placeItems:"center"}}>{c.media_url&&c.media_type==="video"?<video src={c.media_url} controls playsInline style={{width:"100%",height:"100%",objectFit:"cover"}}/>:c.media_url?<img src={c.media_url} alt={c.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<Tag size={54}/>}<span style={{position:"absolute",top:12,right:12,background:"#173d70",color:"#fff",padding:"6px 10px",borderRadius:20,fontSize:12}}>{c.campaign_type==="flash_sale"?"فروش برق‌آسا":c.campaign_type==="limited_deal"?"فرصت محدود":c.campaign_type==="member_offer"?"ویژه اعضا":c.campaign_type==="bundle"?"بسته پیشنهادی":"استوری ویژه"}</span></div>
+ <div style={{padding:16}}><h3 style={{margin:"0 0 8px"}}>{c.title}</h3><p style={{color:"#64748b",lineHeight:1.8}}>{c.description}</p><strong style={{display:"inline-block",color:"#a33b25",fontSize:18,marginBottom:12}}>{discount(c)}</strong><div style={{fontSize:13,color:"#475569"}}><Clock3 size={14} style={{verticalAlign:"middle"}}/> پایان: {new Date(c.ends_at).toLocaleString("fa-IR")}</div><div style={{borderTop:"1px solid #e2e8f0",marginTop:14,paddingTop:12,display:"grid",gap:8}}>{(c.product_ids||[]).map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:9}}>{p.imageUrl&&<img src={p.imageUrl} alt="" style={{width:46,height:46,objectFit:"cover",borderRadius:8}}/>}<div><b style={{fontSize:13}}>{p.name}</b><small style={{display:"block",color:"#64748b"}}>{p.carName}</small></div></div>)}</div><Link onClick={()=>fetch("/api/campaigns/events",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({campaign_id:c.id,event_type:"click"})}).catch(()=>{})} href="/#search" className="offersPrimary" style={{marginTop:16,width:"100%",justifyContent:"center"}}>بررسی محصول و سفارش <ArrowLeft size={16}/></Link></div></article>)}</div>
+ <div className="offersNotice" style={{marginTop:22}}><b>شفافیت قیمت و موجودی</b><p>قیمت پایه در سیستم قیمت‌گذاری دست‌نخورده می‌ماند. محاسبه تخفیف در این مرحله به مرحله پرداخت متصل نشده است؛ سفارش پس از بررسی و تأیید فروشگاه قطعی می‌شود.</p></div></section>
+ <footer><div className="container footerBottom"><Link href="/">بازگشت به صفحه اصلی ماکسیکار</Link><span>ماکسیکار | قطعات · واردات · خودرو</span></div></footer></main>
 }
