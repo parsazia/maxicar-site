@@ -4,7 +4,7 @@ import Link from "next/link";
 import {ArrowLeft,BadgePercent,Clock3,Tag} from "lucide-react";
 export default function SpecialOffersPage(){
  const [items,setItems]=useState([]),[error,setError]=useState("");
- useEffect(()=>{fetch("/api/campaigns",{cache:"no-store"}).then(r=>r.json()).then(d=>{setItems(d.campaigns||[]);(d.campaigns||[]).forEach(c=>fetch("/api/campaigns/events",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({campaign_id:c.id,event_type:"view"})}).catch(()=>{}));if(d.message)setError(d.message)}).catch(()=>setError("اتصال به پیشنهادهای ویژه برقرار نشد."))},[]);
+ useEffect(()=>{fetch("/api/campaigns",{headers:typeof window!=="undefined"&&localStorage.getItem("maxicar_access_token")?{Authorization:"Bearer "+localStorage.getItem("maxicar_access_token")}:{},cache:"no-store"}).then(r=>r.json()).then(d=>{setItems(d.campaigns||[]);(d.campaigns||[]).forEach(c=>fetch("/api/campaigns/events",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({campaign_id:c.id,event_type:"view"})}).catch(()=>{}));if(d.message)setError(d.message)}).catch(()=>setError("اتصال به پیشنهادهای ویژه برقرار نشد."))},[]);
  const fa=n=>Number(n||0).toLocaleString("fa-IR");
  const discount=c=>c.discount_type==="percent"?fa(c.discount_value)+"٪ تخفیف":fa(c.discount_value)+" تومان تخفیف";
  return <main dir="rtl"><div className="announcement"><div className="container announcementInner"><span>ماکسیکار | ویترین داغ</span><span className="announcementSide">پیشنهادهای زمان‌دار و فروش ویژه</span></div></div>
