@@ -53,7 +53,7 @@ function toolResult(id, data) {
 
 function requireBridgeToken(request) {
   const expected = process.env.MAXICAR_BRIDGE_TOKEN;
-  const supplied = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+  const supplied = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!expected) {
     return Response.json({ error: "bridge_not_configured" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
@@ -72,7 +72,7 @@ async function callTool(name, args) {
     const page = Math.max(1, Number(args.page) || 1);
     const page_size = Math.min(100, Math.max(1, Number(args.page_size) || 20));
     const search = String(args.search || "").trim();
-    if (search.length > 120 || /[\\r\\n]/.test(search)) {
+    if (search.length > 120 || /[\r\n]/.test(search)) {
       throw Object.assign(new Error("Search text is invalid."), { code: "INVALID_SEARCH" });
     }
     return readProductCollection({ page, page_size, search });
@@ -80,7 +80,7 @@ async function callTool(name, args) {
 
   if (name === "get_product") {
     const id = String(args.product_id || "");
-    if (!/^\\d+$/.test(id)) {
+    if (!/^\d+$/.test(id)) {
       throw Object.assign(new Error("product_id must be numeric."), { code: "INVALID_PRODUCT_ID" });
     }
     return readProductDetail(id);
