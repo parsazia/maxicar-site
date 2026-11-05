@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
   if (limited) return limited;
 
   const { id } = await params;
-  if (!/^\\d+$/.test(String(id || ""))) {
+  if (!/^\d+$/.test(String(id || ""))) {
     return Response.json({ error: "route_not_allowed" }, { status: 404, headers: { "Cache-Control": "no-store" } });
   }
 
