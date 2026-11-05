@@ -16,7 +16,9 @@ The existing live website at `maxicar.ir` is out of scope and must remain unchan
 | `maxicar-ai-core` | Express | ERROR | Latest build failed because configured root directory `maxicar-ai-core` does not exist in the connected repository. |
 | `maxicar-staging-api` | Not detected | ERROR | Latest build failed because configured root directory `maxicar-staging-api` does not exist in the connected repository. |
 
-All three Vercel projects currently point to the GitHub repository `parsazia/maxicar-site`. The two auxiliary projects are not functioning deployments in their current configuration.
+All three Vercel projects currently point to the GitHub repository `parsazia/maxicar-site`. The latest campaign-branch builds of the two auxiliary projects failed because their configured root folders were absent from that branch. Earlier feature branches did contain those folders and produced READY deployments.
+
+The two auxiliary Vercel projects now have the Ignored Build Step set to `exit 0`, so future commits to the shared repository are skipped there. Their project records and environment variables are retained for recovery and rollback until migration verification is complete.
 
 ### Existing application code observed on `feat/maxicar-campaign-stories`
 
@@ -28,17 +30,27 @@ All three Vercel projects currently point to the GitHub repository `parsazia/max
 
 These capabilities already belong inside the Next.js application and should remain there.
 
+### Recovered auxiliary source code
+
+- `feat/maxicar-management-mcp`: `maxicar-ai-core/src/server.js` contains the Preview-only Express MCP bridge. Its current implementation exposes only `list_products` and `get_product`; product create/update tools were removed and all upstream calls are GET-only.
+- `feat/maxicar-staging-api`: `maxicar-staging-api/api/[...path].js` contains the Preview-only, read-only catalog gateway. It permits only the product collection and numeric product-detail routes, uses a server-side source key, and rejects writes.
+- Both source implementations have been moved into the Next.js application: `lib/maxicar-catalog-server.js`, `app/api/mcp/route.js`, `app/api/v4/products/route.js`, `app/api/v4/products/[id]/route.js`, and `app/api/health/route.js`.
+- `lib/mixin.js` now uses the internal server adapter for product reads. The old cross-project `MAXICAR_STAGING_API_BASE_URL` dependency has been removed from catalog reads.
+- The MCP and compatibility catalog endpoints use the same Preview-only bridge credential (`MAXICAR_BRIDGE_TOKEN`). Upstream catalog reads use `MAXICAR_SOURCE_API_KEY` and remain GET-only.
+
 ### Environment configuration observations
 
 Only variable names, targets, and non-secret metadata were inspected. Secret values were not requested or copied.
 
-- `maxicar-site` Preview currently contains `SUPABASE_URL`, `MAXICAR_STAGING_API_BASE_URL`, and a sensitive `MAXICAR_API_KEY`.
-- The site code inspected requires `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in addition to `SUPABASE_URL`; those two keys were not present in the returned site environment-variable inventory.
+- `maxicar-site` Preview currently contains `SUPABASE_URL`, `MAXICAR_STAGING_API_BASE_URL`, and a sensitive `MAXICAR_API_KEY`. The latter is intentionally not reused because its meaning is ambiguous and it may be an operational key.
+- The site code requires `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in addition to `SUPABASE_URL`; these two keys were not present in the returned site environment-variable inventory.
 - `maxicar-ai-core` Preview has `MAXICAR_API_BASE_URL`, `MAXICAR_PRODUCTS_PATH`, `MAXICAR_BRIDGE_TOKEN`, and a sensitive `MAXICAR_API_KEY`.
 - `maxicar-staging-api` Preview has sensitive `MAXICAR_SOURCE_API_KEY` and `MAXICAR_STAGING_API_KEY`.
-- `MAXICAR_STAGING_API_BASE_URL` on the site points to a deployment URL belonging to the auxiliary staging project.
+- The consolidated application now needs `MAXICAR_BRIDGE_TOKEN` and `MAXICAR_SOURCE_API_KEY` in the target project's Preview environment. The Vercel connection did not expose the existing secret values for transfer, even when requesting decryption; they have not been copied.
+- The old `MAXICAR_STAGING_API_BASE_URL` is no longer used by the catalog-read code. It can be removed after the final dependency scan.
+- Pricing writes remain separately guarded by `MAXICAR_PRICING_API_BASE_URL` and `MAXICAR_PRICING_API_KEY`; these must point to a dedicated non-production sandbox. They were not present in the inspected site environment and price writes must remain locked until configured and verified.
 
-The values and validity of sensitive keys have not been verified. Do not copy, expose, rotate, delete, or broaden their environment targets as part of the initial consolidation.
+Secret values were not printed or committed. Never reuse the ambiguous `MAXICAR_API_KEY` on the site as the catalog source key or as the bridge token.
 
 ## Target architecture
 
@@ -79,8 +91,13 @@ Keep one Vercel project: `maxicar-site`.
 - [x] Environment-variable names and targets inventoried without decrypting secrets.
 - [x] Initial application routes and Supabase dependencies inspected.
 - [ ] Full source inventory completed.
-- [ ] AI content bridge source recovered and migrated.
-- [ ] Staging API source recovered and migrated.
-- [ ] Preview environment completed and verified.
-- [ ] End-to-end Preview tests passed.
-- [ ] Auxiliary Vercel projects safely retired.
+- [x] AI content bridge source recovered and its read-only MCP functionality moved into Next.js.
+- [x] Staging API source recovered and its read-only catalog functionality moved into Next.js.
+- [x] Catalog reads in `lib/mixin.js` redirected to the same-project server adapter.
+- [x] Auxiliary Vercel projects configured to skip future Git builds; project records retained.
+- [ ] Transfer/configure `MAXICAR_BRIDGE_TOKEN` and `MAXICAR_SOURCE_API_KEY` in `maxicar-site` Preview.
+- [ ] Configure `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `maxicar-site` Preview.
+- [ ] Verify the dedicated pricing sandbox variables and keep apply disabled until verified.
+- [ ] Preview runtime, authorization, catalog, Supabase, pricing, and end-to-end purchase-flow tests passed.
+- [ ] Remove obsolete cross-project environment variables after the dependency scan.
+- [ ] Retire the two auxiliary Vercel project records only after all tests pass.
