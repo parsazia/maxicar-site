@@ -12,7 +12,7 @@ export async function GET(request) {
   const blocked = previewOnlyResponse();
   if (blocked) return blocked;
 
-  const authError = requireApiKeyResponse(request, "MAXICAR_STAGING_API_KEY", "Api-Key");
+  const authError = requireApiKeyResponse(request, "MAXICAR_BRIDGE_TOKEN", "Bearer");
   if (authError) return authError;
 
   const limited = rateLimitResponse(request, "catalog", 40);
