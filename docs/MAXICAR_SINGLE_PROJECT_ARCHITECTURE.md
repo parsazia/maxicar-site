@@ -37,6 +37,7 @@ These capabilities already belong inside the Next.js application and should rema
 - Both source implementations have been moved into the Next.js application: `lib/maxicar-catalog-server.js`, `app/api/mcp/route.js`, `app/api/v4/products/route.js`, `app/api/v4/products/[id]/route.js`, and `app/api/health/route.js`.
 - `lib/mixin.js` now uses the internal server adapter for product reads. The old cross-project `MAXICAR_STAGING_API_BASE_URL` dependency has been removed from catalog reads.
 - The MCP and compatibility catalog endpoints use the same Preview-only bridge credential (`MAXICAR_BRIDGE_TOKEN`). Upstream catalog reads use `MAXICAR_SOURCE_API_KEY` and remain GET-only.
+- The recovered MCP implementation currently supports only `list_products` and `get_product`. It does not contain the product-content editing tools (title, description, SEO, tags, secondary attributes, or categories); those capabilities must not be claimed as migrated.
 
 ### Environment configuration observations
 
@@ -51,6 +52,12 @@ Only variable names, targets, and non-secret metadata were inspected. Secret val
 - Pricing writes remain separately guarded by `MAXICAR_PRICING_API_BASE_URL` and `MAXICAR_PRICING_API_KEY`; these must point to a dedicated non-production sandbox. They were not present in the inspected site environment and price writes must remain locked until configured and verified.
 
 Secret values were not printed or committed. Never reuse the ambiguous `MAXICAR_API_KEY` on the site as the catalog source key or as the bridge token.
+
+### Related admin automation intentionally outside this migration
+
+The previously used Maxicar Assistant V23 UserScript runs on the active site's `maxicar.ir/admin/product-v3/*` pages. It fills product text/content fields and SEO fields in the existing admin interface; price entry is intentionally excluded. A separate Category Builder UserScript targets `/admin/categories/*`.
+
+These are browser-side workflows for the active website, not separate Vercel projects or source folders in this new-site repository. They have not been changed or copied. The live `maxicar.ir` admin must remain untouched. If equivalent content-management features are required in the new site, implement them as native, authenticated server-side routes and admin pages inside `maxicar-site`, with the existing protected-field rules (especially price, stock, images, variants, brand, dimensions, barcode, and guarantee) enforced.
 
 ## Target architecture
 
