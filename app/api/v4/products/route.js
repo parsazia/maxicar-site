@@ -23,7 +23,7 @@ export async function GET(request) {
   for (const key of ["page", "page_size", "search"]) {
     const value = url.searchParams.get(key);
     if (value === null || value === "") continue;
-    if (value.length > 120 || /[\\r\\n]/.test(value)) {
+    if (value.length > 120 || /[\r\n]/.test(value)) {
       return Response.json(
         { error: "invalid_query" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
@@ -32,10 +32,10 @@ export async function GET(request) {
     query[key] = value;
   }
 
-  if (query.page !== undefined && (!/^\\d+$/.test(query.page) || Number(query.page) < 1)) {
+  if (query.page !== undefined && (!/^\d+$/.test(query.page) || Number(query.page) < 1)) {
     return Response.json({ error: "invalid_page" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
-  if (query.page_size !== undefined && (!/^\\d+$/.test(query.page_size) || Number(query.page_size) < 1 || Number(query.page_size) > 100)) {
+  if (query.page_size !== undefined && (!/^\d+$/.test(query.page_size) || Number(query.page_size) < 1 || Number(query.page_size) > 100)) {
     return Response.json({ error: "invalid_page_size" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
