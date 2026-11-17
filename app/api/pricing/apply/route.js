@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPricingApiConfig, getPricingRawProduct, patchRawProduct } from "../../../../lib/mixin";
 import { calculateAedSalePrice } from "../../../../lib/aed-pricing";
 import { getAedRate } from "../../../../lib/tgju-aed";
+import { isAdmin, jsonError, requireUser } from "../../../../lib/cashback-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,52 +16,78 @@ function stockEligible(product) {
   return (type === "limited" || type === "محدود") && (stock === null || stock === undefined || stock === "" || Number(stock) > 0);
 }
 
+async function requireAdmin(request) {
+  const auth = await requireUser(request);
+  if (auth.error) return { error: auth.error };
+  let admin = false;
+  try {
+    admin = await isAdmin(auth.user.id, auth.cfg);
+  } catch {
+    return { error: jsonError("بررسی سطح دسترسی مدیر ناموفق بود.", 503) };
+  }
+  if (!admin) return { error: jsonError("برای اعمال قیمت، دسترسی مدیر لازم است.", 403) };
+  return { auth };
+}
+
 export async function POST(request) {
   if (process.env.VERCEL_ENV !== "preview") return NextResponse.json({ error: "PREVIEW_ONLY" }, { status: 404 });
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "ORIGIN_REJECTED" }, { status: 403 });
+
+  const access = await requireAdmin(request);
+  if (access.error) return access.error;
+
   try { getPricingApiConfig(); } catch (error) {
     return NextResponse.json({ error: error.code || "PRICING_SANDBOX_NOT_CONFIGURED", message: error.message || "API آزمایشی مستقل تنظیم نشده است؛ سایت فعال تغییر نمی‌کند." }, { status: error.status || 503 });
   }
+
   try {
     const body = await request.json();
     if (body?.confirm !== true) return NextResponse.json({ error: "EXPLICIT_CONFIRMATION_REQUIRED", message: "تأیید صریح لازم است." }, { status: 400 });
     if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100) return NextResponse.json({ error: "INVALID_ITEMS", message: "بین ۱ تا ۱۰۰ محصول وارد کنید." }, { status: 400 });
+
     const rate = await getAedRate();
     if (Number(body.expectedRateToman) !== rate.rateToman) return NextResponse.json({ error: "RATE_CHANGED", message: "نرخ درهم از زمان پیش‌نمایش تغییر کرده است؛ دوباره پیش‌نمایش بگیرید.", currentRateToman: rate.rateToman }, { status: 409 });
+
     const results = [];
     for (const item of body.items) {
       const id = String(item?.id ?? "").trim();
       const basePriceAed = Number(item?.basePriceAed);
       if (!/^\d+$/.test(id) || !Number.isFinite(basePriceAed) || basePriceAed <= 0) {
-        results.push({ id, ok: false, reason: "شناسه یا قیمت پایه درهم معتبر نیست." }); continue;
+        results.push({ id, ok: false, reason: "شناسه یا قیمت پایه درهم معتبر نیست." });
+        continue;
       }
       try {
         const before = await getPricingRawProduct(id);
         if (!stockEligible(before)) { results.push({ id, ok: false, reason: "موجودی محصول تأیید نشده یا ناموجود است؛ تغییر داده نشد." }); continue; }
         const oldFields = before?.extra_fields;
         if (oldFields !== undefined && oldFields !== null && (Array.isArray(oldFields) || typeof oldFields !== "object")) {
-          results.push({ id, ok: false, reason: "ساختار extra_fields این محصول هنوز قابل تأیید نیست؛ هیچ تغییری اعمال نشد." }); continue;
+          results.push({ id, ok: false, reason: "ساختار extra_fields این محصول هنوز قابل تأیید نیست؛ هیچ تغییری اعمال نشد." });
+          continue;
         }
         const mergedFields = { ...(oldFields || {}), maxicar_base_price_aed: String(basePriceAed) };
         await patchRawProduct(id, { extra_fields: mergedFields });
         const afterFields = await getPricingRawProduct(id);
         if (String(afterFields?.extra_fields?.maxicar_base_price_aed ?? "") !== String(basePriceAed)) {
-          results.push({ id, ok: false, reason: "ذخیره قیمت پایه درهم از API تأیید نشد؛ قیمت فروش تغییر داده نشد." }); continue;
+          results.push({ id, ok: false, reason: "ذخیره قیمت پایه درهم از API تأیید نشد؛ قیمت فروش تغییر داده نشد." });
+          continue;
         }
         const calculated = calculateAedSalePrice(basePriceAed, rate.rateToman);
         await patchRawProduct(id, { price: calculated.salePriceToman });
         const verified = await getPricingRawProduct(id);
         if (Number(verified?.price) !== calculated.salePriceToman) {
-          results.push({ id, ok: false, reason: "قیمت فروش پس از نوشتن تأیید نشد؛ بررسی دستی لازم است.", basePriceSaved: true, expectedPrice: calculated.salePriceToman, observedPrice: verified?.price ?? null }); continue;
+          results.push({ id, ok: false, reason: "قیمت فروش پس از نوشتن تأیید نشد؛ بررسی دستی لازم است.", basePriceSaved: true, expectedPrice: calculated.salePriceToman, observedPrice: verified?.price ?? null });
+          continue;
         }
         results.push({ id, name: verified?.name || before?.name || "", ok: true, previousPrice: before?.price ?? null, ...calculated });
       } catch (error) {
         results.push({ id, ok: false, reason: error.message || "به‌روزرسانی محصول ناموفق بود." });
       }
     }
+
     console.info("[aed-pricing-audit]", JSON.stringify({
       at: new Date().toISOString(),
+      actor: access.auth.user.id,
       source: rate.source,
       sourceRateRial: rate.sourceRateRial,
       rateToman: rate.rateToman,
