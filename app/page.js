@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Search, CarFront, Wrench, ShieldCheck, PackageCheck, Headphones, ChevronLeft, Tag, Ship, BadgePercent, Truck, CreditCard, Menu, X, CircleHelp } from "lucide-react";
-import { cars, systems, products, searchCatalog, normalize } from "./data/catalog";
+import { cars, systems, normalize } from "./data/catalog";
 import CampaignStories from "./components/campaign-stories";
 
 const serviceCards = [
@@ -45,7 +45,7 @@ export default function Home() {
   }, [query]);
 
   const results = useMemo(() => {
-    if (apiState !== "ready") return searchCatalog(query).filter((p) => availability === "همه" || (availability === "ناموجود" ? p.status === "ناموجود" : availability === "قابل استعلام" ? p.status.includes("استعلام") || p.status === "تماس بگیرید" : availability === "موجود" ? p.status.includes("موجود") && p.status !== "ناموجود" : true));
+    if (apiState !== "ready") return [];
     const q = normalize(query);
     return apiProducts.filter((p) => {
       const conditionMatches = availability === "همه" || (availability === "ناموجود" ? p.status === "ناموجود" : availability === "قابل استعلام" ? p.status.includes("استعلام") || p.status === "تماس بگیرید" : availability === "موجود" ? p.status.includes("موجود") && p.status !== "ناموجود" : true);
@@ -53,7 +53,7 @@ export default function Home() {
     });
   }, [apiProducts, apiState, query, availability]);
   const carResults = useMemo(() => { const q = normalize(query); if (!q) return []; return cars.filter((car) => [car.name, car.en, car.slug].some((value) => normalize(value).includes(q) || q.includes(normalize(value)))); }, [query]);
-  const featured = (apiState === "ready" && apiProducts.length ? apiProducts : products).slice(0, 6);
+  const featured = apiState === "ready" ? apiProducts.slice(0, 6) : [];
 
   return <main>
     <div className="announcement"><div className="container announcementInner"><span>ماکسیکار | پلتفرم جامع خودرو</span><span className="announcementSide">قطعات · واردات · خریدوفروش خودرو</span></div></div>
@@ -85,7 +85,7 @@ export default function Home() {
             {carResults.map((car) => <Link className="searchResult" href={"/cars/" + car.slug} key={"car-" + car.slug}><span className="miniPart"><CarFront size={17}/></span><span className="resultText"><b>{car.name}</b><small>{car.en} · مشاهده قطعات</small></span><ChevronLeft size={18}/></Link>)}
             {results.map((p) => <Link className="searchResult" href={p.source === "mixin-api-v4" ? "/parts/" + p.id : "/parts/" + p.slug} key={(p.source || "demo") + "-" + p.slug}><span className="miniPart"><Wrench size={17}/></span><span className="resultText"><b>{p.name}</b><small>{p.carName} · {p.status}{p.price !== undefined && p.price !== null ? " · " + Number(p.price).toLocaleString("fa-IR") + " تومان" : ""}</small></span><ChevronLeft size={18}/></Link>)}
             {!results.length && !carResults.length && <div className="noResults"><CircleHelp size={19}/><span>نتیجه‌ای پیدا نشد؛ نام قطعه یا مدل خودرو را بررسی کن.</span></div>}
-            {apiState === "error" && <p className="demoNotice">اتصال زنده در دسترس نیست: {apiError} نمونه‌های نمایشی نشان داده می‌شوند.</p>}
+            {apiState === "error" && <p className="demoNotice">اتصال زنده در دسترس نیست: {apiError} برای جلوگیری از نمایش اطلاعات غیرواقعی، محصولات نمایش داده نمی‌شوند.</p>}
           </div>}
           <div className="heroProof"><span><ShieldCheck size={16}/> بررسی مشخصات قطعه</span><span><PackageCheck size={16}/> نمایش وضعیت موجودی</span><span><Headphones size={16}/> مسیر استعلام</span></div>
         </div>
@@ -112,10 +112,13 @@ export default function Home() {
 
     <section className="section container" id="sample-parts">
       <div className="sectionTitle"><div><span className="eyebrow">فروشگاه قطعات</span><h2>قطعات منتخب</h2><p>{apiState === "ready" ? "محصولات دریافت‌شده از فروشگاه؛ پیش از سفارش، قیمت و موجودی را بررسی کنید." : "برای پیدا کردن قطعه، از جست‌وجو یا انتخاب مدل خودرو استفاده کنید."}</p></div><Link className="sectionMore" href="/cars/maxima">مشاهده قطعات <ArrowLeft size={16}/></Link></div>
-      <div className="partGrid homePartGrid">{featured.map((p, i) => <Link className="partCard" href={p.source === "mixin-api-v4" ? "/parts/" + p.id : "/parts/" + p.slug} key={(p.source || "demo") + "-" + (p.id || p.slug || i)}>
+      <div className="partGrid homePartGrid">{featured.map((p, i) => <Link className="partCard" href={"/parts/" + p.id} key={String(p.id || i)}>
         <div className="partVisual">{p.imageUrl ? <img src={p.imageUrl} alt={p.name} style={{width:"100%",height:150,objectFit:"contain"}}/> : <div className="partIcon"><Wrench size={37} strokeWidth={1.2}/></div>}<span className="conditionBadge">{p.condition || p.status || "استعلام وضعیت"}</span></div>
         <div className="partCardBody"><span className="partMeta">{p.carName || p.category || "قطعات نیسان"}</span><b>{p.name}</b><span className="partDetails">{p.price !== null && p.price !== undefined ? Number(p.price).toLocaleString("fa-IR") + " تومان" : "استعلام قیمت"} <ArrowLeft size={15}/></span></div>
       </Link>)}</div>
+      {apiState === "loading" && <p>در حال دریافت محصولات واقعی فروشگاه…</p>}
+      {apiState === "error" && <p className="demoNotice">محصولی نمایش داده نمی‌شود تا اطلاعات واقعی و موجودی تأییدنشده با نمونه نمایشی اشتباه نشود.</p>}
+      {apiState === "ready" && !featured.length && <p>در حال حاضر محصولی از API فروشگاه دریافت نشد.</p>}
     </section>
 
     <section className="modelBand"><div className="container modelBandInner"><div className="modelBandCopy"><span className="eyebrow">جست‌وجو بر اساس مدل</span><h2>خودروت را انتخاب کن</h2><p>مسیر قطعات را از مدل خودرو شروع کن.</p></div><div className="modelBandCars">{cars.map((car) => <Link href={"/cars/" + car.slug} key={car.slug} className="modelBandCar"><span className="modelCarIcon"><CarFront size={43}/></span><b>{car.name}</b><small>{car.en}</small></Link>)}</div></div></section>
