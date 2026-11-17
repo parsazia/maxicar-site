@@ -39,8 +39,15 @@ export default function PricingAdminPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sandboxStatus, setSandboxStatus] = useState(null);
+  const [token, setToken] = useState("");
 
   useEffect(() => {
+    const savedToken = localStorage.getItem("maxicar_access_token");
+    if (!savedToken) {
+      window.location.href = "/login";
+      return;
+    }
+    setToken(savedToken);
     fetch("/api/pricing/status", { cache: "no-store" }).then(r => r.json()).then(setSandboxStatus).catch(() => setSandboxStatus({ canApply: false, message: "وضعیت API آزمایشی قابل بررسی نیست." }));
   }, []);
 
@@ -78,17 +85,18 @@ export default function PricingAdminPage() {
   async function applyPrices() {
     const valid = preview?.results?.filter(item => item.ok) || [];
     if (!valid.length) { setError("هیچ محصول واجد شرایطی برای اعمال قیمت وجود ندارد."); return; }
+    if (!token) { setError("نشست کاربری معتبر نیست؛ دوباره وارد شوید."); return; }
     const accepted = window.confirm("تأیید نهایی: قیمت " + valid.length + " محصول در فروشگاه آزمایشی تغییر می‌کند. سایت فعال maxicar.ir تغییر نمی‌کند. ادامه می‌دهید؟");
     if (!accepted) return;
     setBusy(true); setError(""); setResult(null);
     try {
       const response = await fetch("/api/pricing/apply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
         body: JSON.stringify({ confirm: true, expectedRateToman: preview.rate.rateToman, items: valid.map(item => ({ id: item.id, basePriceAed: item.basePriceAed })) }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "اعمال قیمت‌ها ناموفق بود.");
+      if (!response.ok) throw new Error(data.message || data.error || "اعمال قیمت‌ها ناموفق بود.");
       setResult(data);
       setPreview(null);
     } catch (e) { setError(e.message || "اعمال قیمت‌ها ناموفق بود."); }
@@ -131,7 +139,7 @@ export default function PricingAdminPage() {
             <td style={{ padding: 10, borderBottom: "1px solid #edf1f5", color: item.ok ? "#17633c" : "#a12828" }}>{item.ok ? "قابل اعمال · " + item.stockStatus : item.reason}</td>
           </tr>)}</tbody>
         </table></div>
-        <button onClick={applyPrices} disabled={busy || !sandboxStatus?.canApply || !preview.results.some(item => item.ok)} style={{ ...buttonStyle, marginTop: 16, opacity: busy ? .65 : 1 }}>{busy ? "در حال اعمال…" : "۴. تأیید و اعمال قیمت‌های واجد شرایط"}</button>
+        <button onClick={applyPrices} disabled={busy || !token || !sandboxStatus?.canApply || !preview.results.some(item => item.ok)} style={{ ...buttonStyle, marginTop: 16, opacity: busy ? .65 : 1 }}>{busy ? "در حال اعمال…" : "۴. تأیید و اعمال قیمت‌های واجد شرایط"}</button>
       </section>}
       {result && <section style={{ background: "white", border: "1px solid #dce4ed", borderRadius: 16, padding: 16 }}>
         <h2 style={{ marginTop: 0 }}>گزارش اجرای قیمت‌گذاری</h2>
